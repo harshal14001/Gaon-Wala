@@ -1,0 +1,44 @@
+.store-header {
+  height: 15vh; /* Dynamic height: 15% of viewport */
+  border-bottom: 1px solid rgba(119, 123, 119, 0.552);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2vw;
+  position: relative;
+  background-color: #fff;
+}
+
+/* Center logo dynamically */
+.nav-img {
+  height: 125px;           /* Adjust to fit header height */
+  width: 125px;           /* Maintain aspect ratio */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  object-fit: contain;
+}
+
+/* Input box (search) */
+.search-input {
+  padding: 0.7em 1em;
+  font-size: 1rem;
+  width: 18vw;            /* Responsive width */
+  max-width: 300px;
+  border-radius: 0.5em;
+  border: 1px solid #676b68;
+}
+
+
+/* for icon*/
+.icon-cart{
+  height: 30px;
+  width: 30px;
+  font-size: 50px;
+  color: #333; 
+  cursor: pointer;
+}
+
+/**/
+/* above section include nav  section*/
+/**/

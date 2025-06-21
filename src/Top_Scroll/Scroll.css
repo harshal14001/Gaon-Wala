@@ -1,0 +1,44 @@
+.custom-scroll-section_bar {
+  overflow: hidden;
+  background-color: #96c584;
+  padding: 0.5rem 0;
+  white-space: nowrap;
+}
+
+.custom-scroll-section--scroll {
+  display: flex;
+  width: max-content;
+  animation: scroll var(--duration) linear infinite;
+}
+
+.custom-scroll-section-slide-track {
+  display: flex;
+  gap: 3rem; /* space between messages */
+}
+
+.custom-scroll-section--slide {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.text-wrapper {
+  padding: 0 1rem;
+}
+
+.custom-scroll-section--heading {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  text-decoration: none;
+}
+
+/* Scroll animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
