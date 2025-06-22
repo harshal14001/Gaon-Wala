@@ -14,6 +14,7 @@ const Banner = () => {
       <img className="nav-img" src={logo} alt="Main-Logo" />
       
       <BsCart3 className="icon-cart" />
+      
     </header>
   )
 }
