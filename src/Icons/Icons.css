@@ -1,5 +1,36 @@
-.Custom-icons{
-    background-color: bisque;
-    height: 100px;
-    width: 100%;
+.icons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.tile_padding {
+  margin-top: -9px; 
+  text-align: center;
+  padding: 0.5rem;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+}
+
+.tile_padding:hover {
+  transform: scale(1.05);
+}
+
+.logo-list__image {
+  padding:14px;
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  border-radius: 50%;
+  background-color: #f5f5f5;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.icon-title {
+  margin-top: 0.5rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }

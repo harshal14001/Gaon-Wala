@@ -1,5 +1,5 @@
 .store-header {
-  height: 15vh; /* Dynamic height: 15% of viewport */
+  height: 17vh; /* Dynamic height: 15% of viewport */
   border-bottom: 1px solid rgba(119, 123, 119, 0.552);
   display: flex;
   align-items: center;
