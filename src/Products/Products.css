@@ -1,0 +1,121 @@
+/* Container grid */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* Card itself */
+.product-card {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  padding: 1.5rem;
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Hover effect */
+.product-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Product image */
+.product-image {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin: 0 auto 1rem;
+}
+
+/* Title and price */
+.product-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0.5rem 0;
+}
+
+.product-price {
+  font-size: 1rem;
+  color: #777;
+  margin-bottom: 1rem;
+}
+
+/* Button group */
+.cart-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+/* All buttons */
+.add-to-cart-btn,
+.in-cart-btn,
+.remove-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s ease;
+}
+
+/* Button styles */
+.add-to-cart-btn {
+  background-color: #1d884a;
+  color: #fff;
+}
+
+.add-to-cart-btn:hover {
+  background-color: #157a3f;
+}
+
+.in-cart-btn {
+  background-color: #ccc;
+  color: #333;
+  cursor: default;
+}
+
+.remove-btn {
+  background-color: #ff4d4d;
+  color: white;
+}
+
+.remove-btn:hover {
+  background-color: #e60000;
+}
+
+/* Cart section */
+.cart-container {
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border-top: 2px solid #eee;
+  max-width: 900px;
+  margin: 2rem auto;
+  font-family: sans-serif;
+}
+
+.cart-container h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.cart-container ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.cart-container li {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #333;
+}

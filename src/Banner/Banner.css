@@ -1,5 +1,5 @@
 .store-header {
-  height: 17vh; /* Dynamic height: 15% of viewport */
+  height: 17vh; 
   border-bottom: 1px solid rgba(119, 123, 119, 0.552);
   display: flex;
   align-items: center;
@@ -9,8 +9,8 @@
   background-color: #fff;
 }
 
-/* Center logo dynamically */
-.nav-img {
+
+.nav-img {                 /* Center logo dynamically */
   height: 125px;           /* Adjust to fit header height */
   width: 125px;           /* Maintain aspect ratio */
   position: absolute;
@@ -39,6 +39,19 @@
   cursor: pointer;
 }
 
-/**/
-/* above section include nav  section*/
-/**/
+/*cart */
+.cart-icon-wrapper {
+  position: relative;
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background-color: red;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 2px 6px;
+}

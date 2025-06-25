@@ -1,37 +1,54 @@
-import './Icons.css'
+import './Icons.css';
 
 const categoryIcons = [
   {
     title: "Fruits",
-    image: "/src/assets/Fruits-png-effect.png",
-    // link: "/src/assets/Fruits-png-effect.png",
-    alt: "Fruits-img"
+    image: "/src/assets/fruits-banana-svgrepo-com.svg",
+    alt: "Fruits-img",
+    category: "Fruits"
+  },
+  {
+    title: "Vegies",
+    image: "/src/assets/vegetables-salad-svgrepo-com.svg",
+    alt: "Vegies-img",
+    category: "Vegetable"
   },
   {
     title: "Milk Products",
     image: "/src/assets/milk-svgrepo-com.svg",
-    // link: "/src/assets/milk-svgrepo-com.svg",
-    alt: "Milkproducts-img"
+    alt: "Milkproducts-img",
+    category: "Milk Products"
   },
   {
     title: "Plants",
     image: "/src/assets/plant-svgrepo-com.svg",
-    // link: "/src/assets/plant-svgrepo-com.svg",
-    alt: "Plants-img"
+    alt: "Plants-img",
+    category: "Plants"
   },
   {
     title: "Seeds",
     image: "/src/assets/coffee-grain-seed-svgrepo-com.svg",
-    // link: "/src/assets/seeds-svgrepo-com.svg",
-    alt: "Seeds-img"
+    alt: "Seeds-img",
+    category: "Seeds"
+  },
+  {
+    title: "Sneek Peek",
+    image: "/src/assets/gift-svgrepo-com.svg",
+    alt: "Sneekpeek-img",
+    category: "Sneek Peek"
   }
 ];
 
-const Icons = () => {
+const Icons = ({ onCategorySelect }) => {
   return (
     <div className="icons-grid">
       {categoryIcons.map((icon, index) => (
-        <a key={index} href={icon.link} className="tile_padding">
+        <div
+          key={index}
+          className="tile_padding"
+          onClick={() => onCategorySelect(icon.category)}
+          style={{ cursor: "pointer" }}
+        >
           <div className="tile_padding">
             <img
               loading="lazy"
@@ -44,7 +61,7 @@ const Icons = () => {
             />
           </div>
           <p className="icon-title">{icon.title}</p>
-        </a>
+        </div>
       ))}
     </div>
   );
