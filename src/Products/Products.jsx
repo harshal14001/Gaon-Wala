@@ -6,6 +6,16 @@ const allProducts = [
   { id: 3, title: "Organic Ghee", price: "₹349", image: "", category: "Milk Products" },
   { id: 4, title: "Mango Plant", price: "₹399", image: "", category: "Plants" },
   { id: 5, title: "Soyabean Seeds", price: "₹45", image: "", category: "Seeds" },
+  { id: 6, title: "Jamun Plant", price: "₹399", image: "", category: "Plants" },
+  { id: 7, title: "Chickoo Plant", price: "₹399", image: "", category: "Plants" },
+  { id: 8, title: "Corn", price: "₹99", image: "", category: "Seeds" },
+  { id: 9, title: "Maize", price: "₹99", image: "", category: "Seeds" },
+  { id: 10, title: "Wheat", price: "₹99", image: "", category: "Seeds" },
+  { id: 11, title: "Jowar", price: "₹99", image: "", category: "Seeds" },
+  { id: 12, title: "Lemon", price: "₹99", image: "", category: "Vegetables" },
+  { id: 13, title: "Jamun Plant", price: "₹99", image: "", category: "Plants" },
+
+
 ];
 
 const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {

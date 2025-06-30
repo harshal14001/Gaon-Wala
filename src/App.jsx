@@ -10,7 +10,7 @@ const App = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState([]);
   const [showCart, setShowCart] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); // 🟡 New
+  const [searchQuery, setSearchQuery] = useState(""); 
 
   const handleRemoveFromCart = (productId) => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
@@ -22,12 +22,12 @@ const App = () => {
       <Banner
         cart={cart}
         onCartClick={() => setShowCart(true)}
-        onSearch={setSearchQuery} // 🟡 Pass search setter
+        onSearch={setSearchQuery} // Pass search setter
       />
       <Icons onCategorySelect={setSelectedCategory} />
       <Products
         selectedCategory={selectedCategory}
-        searchQuery={searchQuery} // 🟡 Pass query
+        searchQuery={searchQuery} //  Pass query
         cart={cart}
         setCart={setCart}
       />

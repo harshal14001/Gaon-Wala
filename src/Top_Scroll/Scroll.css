@@ -13,7 +13,7 @@
 
 .custom-scroll-section-slide-track {
   display: flex;
-  gap: 3rem; /* space between messages */
+  gap: 3rem;
 }
 
 .custom-scroll-section--slide {

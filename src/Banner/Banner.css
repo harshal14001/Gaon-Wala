@@ -1,11 +1,14 @@
 .store-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   height: 17vh; 
   border-bottom: 1px solid rgba(119, 123, 119, 0.552);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 2vw;
-  position: relative;
+  
   background-color: #fff;
 }
 

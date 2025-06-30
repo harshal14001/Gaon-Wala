@@ -11,7 +11,7 @@ const Banner = ({ cart, onCartClick, onSearch }) => {
           name="search-form"
           className="search-input"
           placeholder="Search Products"
-          onChange={(e) => onSearch(e.target.value)} // 🟡 Update on type
+          onChange={(e) => onSearch(e.target.value)} //  Update on type
         />
       </div>
 
