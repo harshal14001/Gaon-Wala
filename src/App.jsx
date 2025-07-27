@@ -13,7 +13,7 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState(""); 
 
   const handleRemoveFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
   };
 
   return (

@@ -13,14 +13,14 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart }) => {
         ) : (
           <div className="cart-items">
             {cart.map((item) => (
-              <div key={item.id} className="cart-item-card">
+              <div key={item._id} className="cart-item-card">
                 <img src={item.image} alt={item.title} className="cart-item-img" />
                 <div className="cart-item-details">
                   <h4>{item.title}</h4>
                   <p>{item.price}</p>
                   <button
                     className="remove-btn"
-                    onClick={() => onRemoveFromCart(item.id)}
+                    onClick={() => onRemoveFromCart(item._id)}
                   >
                     Remove
                   </button>
