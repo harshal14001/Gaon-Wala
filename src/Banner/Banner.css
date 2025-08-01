@@ -2,59 +2,105 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  height: 17vh; 
+  background-color: #fff;
   border-bottom: 1px solid rgba(119, 123, 119, 0.552);
+  padding: 1rem 2vw;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2vw;
-  
-  background-color: #fff;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
+.search-wrapper,
+.logo-container,
+.icon-wrapper-group {
+  display: flex;
+  align-items: center;
+  flex: 1 1 100%;
+}
 
-.nav-img {                 /* Center logo dynamically */
-  height: 125px;           /* Adjust to fit header height */
-  width: 125px;           /* Maintain aspect ratio */
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+.search-wrapper {
+  justify-content: center;
+  order: 2;
+}
+
+.logo-container {
+  justify-content: center;
+  order: 1;
+}
+
+.icon-wrapper-group {
+  justify-content: center;
+  gap: 20px;
+  order: 3;
+}
+
+.nav-img {
+  height: 90px;
+  max-width: 100%;
   object-fit: contain;
 }
 
-/* Input box (search) */
 .search-input {
+  width: 100%;
+  max-width: 300px;
   padding: 0.7em 1em;
   font-size: 1rem;
-  width: 18vw;            /* Responsive width */
-  max-width: 300px;
   border-radius: 0.5em;
   border: 1px solid #676b68;
 }
 
-
-/* for icon*/
-.icon-cart{
-  height: 30px;
-  width: 30px;
-  font-size: 50px;
-  color: #333; 
+.icon-cart,
+.icon-admin {
+  font-size: 1.8rem;
+  color: #333;
   cursor: pointer;
 }
 
-/*cart */
 .cart-icon-wrapper {
   position: relative;
+  display: inline-block;
 }
 
 .cart-count {
   position: absolute;
   top: -8px;
   right: -10px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: red;
   color: white;
   font-size: 0.7rem;
   font-weight: bold;
   border-radius: 50%;
-  padding: 2px 6px;
+}
+
+@media (min-width: 768px) {
+  .search-wrapper,
+  .logo-container,
+  .icon-wrapper-group {
+    flex: 1;
+    order: unset;
+  }
+
+  .search-wrapper {
+    justify-content: flex-start;
+  }
+
+  .logo-container {
+    justify-content: center;
+  }
+
+  .icon-wrapper-group {
+    justify-content: flex-end;
+  }
+}
+@media (max-width: 480px) {
+  .nav-img {
+    height: 60px;
+  }
 }

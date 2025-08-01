@@ -2,20 +2,27 @@ import Products from "../Models/Products.js";
 
 
 // GET all products
-export const getProducts = async(req,res)=>{
-    try{
-        const products = await Products.find();
-        res.json(products);
+export const getProducts = async (req, res) => {
+  try {
+    const products = await Products.find();
+    if (!Array.isArray(products)) {
+      return res.status(500).json({ message: "Products not an array" });
     }
-    catch(err){
-        res.status(500).json({error:"failed to fetch products"});
-    }
+    res.json(products);
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    res.status(500).json({ message: "failed to fetch products" });
+  }
 };
+
 
 
 // POST - send - create product (for adding from backend if needed)
 export const addProduct = async (req, res) => {
-  const { title, price, image, category } = req.body;
+  const { title, price, category } = req.body;
+  const image = req.file?.filename;
+  if (!image) return res.status(400).json({ message: "Image required" });
+
   try {
     const newProduct = new Products({ title, price, image, category });
     await newProduct.save();
@@ -24,6 +31,7 @@ export const addProduct = async (req, res) => {
     res.status(400).json({ message: "Error adding product" });
   }
 };
+
 
 //PATCH - Update a product
 export const updateProduct = async (req, res) => {

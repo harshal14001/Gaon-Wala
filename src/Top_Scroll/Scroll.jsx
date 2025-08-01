@@ -54,4 +54,4 @@ const Scroll = () => {
   )
 }
 
-export default Scroll
+export default Scroll;

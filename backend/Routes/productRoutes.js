@@ -1,18 +1,20 @@
-import express from "express";
-import { getProducts ,addProduct,updateProduct,deleteProduct } from "../Controllers/productController.js";
-const router = express.Router();
+import express from 'express';
+import multer from 'multer';
+import {
+  getProducts,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+} from '../Controllers/productController.js';
+import { protectAdmin } from '../Middlewares/authMiddleware.js';
 
-// GET/api/products
-router.get("/", getProducts);
-// POST/api/products
-router.post("/", addProduct);
-//put
-router.put("/:id", updateProduct);
-//DELETE
-router.delete("/:id", deleteProduct);
+const router = express.Router(); // ✅ MUST BE BEFORE usage
 
+const upload = multer({ dest: 'uploads/' }); // ✅ okay here
 
-
-
+router.get('/', getProducts);
+router.post('/', protectAdmin, upload.single('image'), addProduct);
+router.put('/:id', protectAdmin, updateProduct);
+router.delete('/:id', protectAdmin, deleteProduct);
 
 export default router;
