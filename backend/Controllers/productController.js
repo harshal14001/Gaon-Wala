@@ -18,19 +18,36 @@ export const getProducts = async (req, res) => {
 
 
 // POST - send - create product (for adding from backend if needed)
-export const addProduct = async (req, res) => {
-  const { title, price, category } = req.body;
-  const image = req.file?.filename;
-  if (!image) return res.status(400).json({ message: "Image required" });
 
+export const addProduct = async (req, res) => {
+  console.log("Uploaded File:", req.file); 
   try {
-    const newProduct = new Products({ title, price, image, category });
-    await newProduct.save();
+    console.log("Form Data:", req.body);
+    console.log("Uploaded File:", req.file);
+
+    const { title, price, category } = req.body;
+
+    if (!title || !price || !category) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    const image = req.file?.filename || null;
+
+    const newProduct = await Product.create({
+      title,
+      price,
+      category,
+      image,
+    });
+
     res.status(201).json(newProduct);
   } catch (err) {
-    res.status(400).json({ message: "Error adding product" });
+    console.error("Product upload error:", err);
+    res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+
 
 
 //PATCH - Update a product
