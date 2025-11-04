@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 // Correct storage engine with resolved path
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads")); // ✅ Matches server.js static path
+    cb(null, path.join(__dirname, "../uploads")); //  Matches server.js static path
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + file.originalname;

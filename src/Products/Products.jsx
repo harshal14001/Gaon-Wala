@@ -134,6 +134,7 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
               />
               <h3 className="product-title">{product.title}</h3>
               <p className="product-price">₹{product.price}</p>
+              
 
               <div className="cart-buttons">
                 {!inCart ? (
