@@ -37,9 +37,9 @@ const AdminDashboard = ({ onLogout }) => {
       prev.map((p) =>
         p._id === id
           ? {
-              ...p,
-              editForm: { ...p.editForm, [name]: files ? files[0] : value },
-            }
+            ...p,
+            editForm: { ...p.editForm, [name]: files ? files[0] : value },
+          }
           : p
       )
     );
@@ -71,15 +71,15 @@ const AdminDashboard = ({ onLogout }) => {
       prev.map((p) =>
         p._id === product._id
           ? {
-              ...p,
-              isEditing: true,
-              editForm: {
-                title: product.title,
-                price: product.price,
-                image: null,
-                category: product.category,
-              },
-            }
+            ...p,
+            isEditing: true,
+            editForm: {
+              title: product.title,
+              price: product.price,
+              image: null,
+              category: product.category,
+            },
+          }
           : { ...p, isEditing: false }
       )
     );
@@ -135,7 +135,7 @@ const AdminDashboard = ({ onLogout }) => {
       <form className="product-form" onSubmit={handleAdd}>
         <input name="title" placeholder="Title" value={form.title} onChange={handleFormChange} required />
         <input name="price" type="number" placeholder="Price ₹" value={form.price} onChange={handleFormChange} required />
-        <input name="image" type="file" accept="image/*" onChange={handleFormChange} />
+        <input name="image" type="text"   placeholder="Paste Cloudinary image URL" value={form.image} onChange={handleFormChange}/>
         <input name="category" placeholder="Category" value={form.category} onChange={handleFormChange} required />
         <button type="submit" className="add-btn" disabled={loading}>{loading ? "Adding..." : "Add Product"}</button>
         {error && <p className="form-error">{error}</p>}
