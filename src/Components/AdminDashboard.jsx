@@ -145,7 +145,7 @@ const AdminDashboard = ({ onLogout }) => {
         <h3>All Products</h3>
         {products.map((product) => (
           <div key={product._id} className="product-item">
-            <img src={`http://localhost:5000/uploads/${product.image}`} alt={product.title} />
+            <img src={product.image} alt={product.title} />
             <div className="product-details">
               <h4>{product.title}</h4>
               <p>₹{product.price}</p>
