@@ -152,6 +152,6 @@ dist
 
 
 # secret data
-.env
-.seedAdmin.mjs
-.seeder.mjs
+env
+seedAdmin.mjs
+seeder.mjs
