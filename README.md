@@ -19,13 +19,13 @@ delete, update).
 ## Screenshots
 
 ### Home Page
-<img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/63eafc3f-3000-4ecc-a411-a8ea4850f18b" />
+<img width="1918" height="881" alt="Image" src="https://github.com/user-attachments/assets/801d3b5a-a2ec-4c9b-a652-111a3416a107" />
 
 ### Product Filter by category
-<img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/0613af51-7d9a-4e60-9841-8f3070b0ab35" />
+<img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/9337972d-baea-494e-92f2-cf0e7f56922b" />
 
 ### Cart Section
-<img width="1920" height="881" alt="Image" src="https://github.com/user-attachments/assets/d95fe06b-0375-4090-8e4f-29c0881055a1" />
+<img width="1920" height="881" alt="Image" src="https://github.com/user-attachments/assets/3807fb07-6259-485b-baf5-952628ff5825" />
 
 ### Admin Login
 <img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/36500e74-950c-4562-a346-19dd894aac25" />
@@ -34,4 +34,4 @@ delete, update).
 <img width="1920" height="467" alt="Image" src="https://github.com/user-attachments/assets/23553e6b-f235-43eb-9049-52a7b0845a0e" />
 
 ### Edit/Delete Existing Products
-<img width="1920" height="876" alt="Image" src="https://github.com/user-attachments/assets/2f4a5ef4-0f07-468d-95c9-84289e8a0e44" />
+<img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/405a74cc-d2f4-4e30-9663-15b63a17f9dd" />
