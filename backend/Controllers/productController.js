@@ -20,44 +20,70 @@ export const getProducts = async (req, res) => {
 // POST - send - create product (for adding from backend if needed)
 
 export const addProduct = async (req, res) => {
-  console.log("Uploaded File:", req.file); 
   try {
-    console.log("Form Data:", req.body);
-    console.log("Uploaded File:", req.file);
-
+    // Multer processes the file first, then populates req.body
     const { title, price, category } = req.body;
+
+    console.log("Body received:", req.body); // Debugging
+    console.log("File received:", req.file); // Debugging
 
     if (!title || !price || !category) {
       return res.status(400).json({ message: "Missing fields" });
     }
 
-    const image = req.file?.filename || null;
+    // FIX: LOGIC TO HANDLE BOTH FILE UPLOAD OR PASTED URL
+    let imagePath = "";
 
-    const newProduct = await Product.create({
+    if (req.file) {
+      // Case 1: Admin uploaded a file from computer
+      imagePath = `http://localhost:5000/uploads/${req.file.filename}`;
+    } else if (req.body.image) {
+      // Case 2: Admin pasted a Cloudinary/External URL string
+      imagePath = req.body.image;
+    }
+
+    const newProduct = await Products.create({
       title,
       price,
       category,
-      image,
+      image: imagePath,
     });
 
     res.status(201).json(newProduct);
   } catch (err) {
     console.error("Product upload error:", err);
-    res.status(500).json({ message: "Something went wrong" });
+    res.status(500).json({ message: "Something went wrong on the server" });
   }
 };
 
 
-
-
 //PATCH - Update a product
+
+// Controllers/productController.js
+
 export const updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { title, price, image, category } = req.body;
+  const { title, price, category } = req.body;
+
   try {
+    let updateData = {
+      title,
+      price,
+      category
+    };
+
+    // LOGIC: Check for File first, then Check for Text URL
+    if (req.file) {
+      // 1. New File Uploaded
+      updateData.image = `http://localhost:5000/uploads/${req.file.filename}`;
+    } else if (req.body.image) {
+      // 2. Text URL provided (Cloudinary or kept existing)
+      updateData.image = req.body.image;
+    }
+
     const updated = await Products.findByIdAndUpdate(
       id,
-      { title, price, image, category },
+      updateData,
       { new: true }
     );
     res.json(updated);

@@ -10,37 +10,44 @@ const AdminLogin = ({ onLoginSuccess, onClose }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("Click works");
-    console.log("email:", email, "password:", password);
-
-    if (!email || !password) {
-      setError("Please enter both email and password");
-      return;
-    }
-
     try {
-      setLoading(true);
-      const res = await axios.post("http://localhost:5000/api/admin/login", {
-        email,
-        password,
-      });
+      const res = await axios.post("http://localhost:5000/api/admin/login", { email, password });
 
       console.log("Server response:", res.data);
 
-      if (res.data?.token) {
-        localStorage.setItem("adminToken", res.data.token);
-        onLoginSuccess();
+    
+      if (res.data && res.data.token) {
+        onLoginSuccess(res.data.token);
       } else {
-        setError("No token returned from server");
+        alert("Login failed: Token missing");
       }
+
     } catch (err) {
-      console.error("Login failed", err);
-      setError("Invalid credentials");
-    } finally {
-      setLoading(false);
+      console.error(err);
+      alert("Invalid Credentials");
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post("http://localhost:5000/api/admin/login", { email, password });
+
+      console.log("Server response:", res.data);
+
+
+      // ✅ CORRECT: Drill into .data to find .token
+      if (res.data && res.data.token) {
+        onLoginSuccess(res.data.token);
+      } else {
+        alert("Token missing in response");
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("Invalid Credentials");
+    }
+  };
 
   return (
     <div className="admin-modal-overlay" onClick={onClose}>

@@ -25,11 +25,15 @@ const App = () => {
     if (token) setIsAdmin(true);
   }, []);
 
-  const handleAdminLogin = (token) => {
-    localStorage.setItem("adminToken", token);
-    setIsAdmin(true);
-    setShowAdminModal(false);
-  };
+const handleAdminLogin = (token) => {
+    if (token && typeof token === "string") {
+        localStorage.setItem("adminToken", token);
+        setIsAdmin(true);
+        setShowAdminModal(false);
+    } else {
+        alert("Login failed.");
+    }
+};
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");

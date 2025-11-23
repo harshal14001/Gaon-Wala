@@ -5,7 +5,7 @@ const categoryIcons = [
     title: "Fruits",
     image: "/src/assets/fruits-banana-svgrepo-com.svg",
     alt: "Fruits-img",
-    category: "Fruits"
+    category: "Fruit"
   },
   {
     title: "Vegies",

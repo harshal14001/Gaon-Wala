@@ -1,7 +1,5 @@
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
-
 export const protectAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -12,10 +10,12 @@ export const protectAdmin = (req, res, next) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.adminId = decoded.id; // optional: save other info
+    const secret = process.env.JWT_SECRET || "supersecretkey";
+    const decoded = jwt.verify(token, secret);
+    req.adminId = decoded.id; 
     next();
   } catch (error) {
+    console.error("Token verification failed:", error.message);
     res.status(403).json({ message: "Invalid or expired token" });
   }
 };

@@ -5,7 +5,6 @@ import { addProduct } from '../Controllers/productController.js';
 
 const router = express.Router();
 
-router.post('/login', loginAdmin); //  add in future
-//
+router.post('/login', loginAdmin);
 router.post('/add', protectAdmin, addProduct);
 export default router;
