@@ -5,6 +5,7 @@ Hi, I’m **Harshal Argade** 👋
 - Full Stack Web Developer (React, Node.js, MongoDB, Express)  
 - Passionate about building scalable apps and solving real-world problems.  
 - Contact: [harshalargade.dev@gmail.com]
+- Linkedin : [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/harshal-argade-dev/)
 - Do visit my other Projects also.
 
 ## Project Details
