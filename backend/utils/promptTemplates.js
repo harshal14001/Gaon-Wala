@@ -1,23 +1,34 @@
+// backend/utils/promptTemplates.js
+
 export const generateSalesPrompt = (userQuery, availableProducts) => {
-    // FIX: Changed 'p.name' to 'p.title' and 'p.description' to 'p.category'
-    const productListString = availableProducts.map(p => 
-        `- ${p.title} (Price: ₹${p.price}, Category: ${p.category})`
-    ).join("\n");
+    const inventoryNames = availableProducts.map(p => p.title).join(", ");
 
     return `
-    You are a friendly, knowledgeable shop assistant at "GaonWala", an Indian village farmer's market.
+    You are "GaonWala Sahayak", an AI assistant for an organic shop.
     
-    A customer has asked: "${userQuery}"
+    **Context:**
+    - User Query: "${userQuery}"
+    - Full Inventory: [${inventoryNames}]
 
-    Here is the ONLY inventory we have in stock right now:
-    ${productListString}
+    **STRICT FILTERING RULES (DO NOT BREAK):**
+    1. **Exact Match Only:** If the user asks for a SPECIFIC item (e.g., "Guava", "Onion"), you must ONLY return that item.
+    2. **No "Similar" Items:** Do NOT recommend "related" items. If the user asks for "Guava", do NOT show "Papaya" or "Lemon" just because they are fruits.
+    3. **General Queries:** Only if the user asks a BROAD category (e.g., "Show me fruits", "I need Vitamin C"), THEN you can list multiple matching items.
 
-    Your Rules:
-    1. ONLY recommend products from the list above.
-    2. If the user mentions a health need, explain which of OUR products helps based on its category.
-    3. Keep the answer short (under 3 sentences) and encourage them to buy.
-    4. Be warm and respectful (use "Ji").
+    **YOUR OUTPUT (JSON ONLY):**
+    {
+       "thought": "Brief answer to the question (nutrition/benefits/etc).",
+       "recommended_product_names": ["Exact Name"] 
+    }
 
-    Answer the customer now:
+    **EXAMPLES:**
+    - Input: "Tell me about Guava"
+    - WRONG: ["Guava", "Papaya", "Lemon"] (Too many!)
+    - CORRECT: ["Guava"] (Perfect.)
+
+    - Input: "What fruits do you have?"
+    - CORRECT: ["Guava", "Papaya", "Mango", "Lemon"] (Broad query allowed.)
+
+    Generate the JSON response now:
     `;
 };
