@@ -1,5 +1,5 @@
 
-## 🚀 GaonWala E-Commerce Website for Farm Produce
+## 🚀 GaonWala - AI-Powered E-Commerce Platform
 ####  About Me
 Hi, I’m **Harshal Argade** 👋  
 - Full Stack Web Developer and tech-savvy person.
@@ -9,8 +9,10 @@ Hi, I’m **Harshal Argade** 👋
 - Do visit my other Projects also.
 
 ## Project Details
-- Designed and developed a full-stack platform enabling customers to purchase farm produce online.
+- Constructed a full-stack e-commerce platform that enabled farmers to sell produce online.
 - Added custom Admin Panel to Add/Edit/Delete products dynamically.
+- Engineered a context-aware AI Sales Assistant using Generative AI and Prompt Engineering to
+  answer nutritional queries and recommend in-stock products in real-time.
 - Implemented secure JWT-based authentication for admin access and built product management feature(add,
 delete, update).
 - Integrated MongoDB for dynamic product storage and retrieval, ensuring scalability.
