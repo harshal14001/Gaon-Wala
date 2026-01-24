@@ -17,21 +17,31 @@ Hi, I’m **Harshal Argade** 👋
 delete, update).
 - Integrated MongoDB for dynamic product storage and retrieval, ensuring scalability.
 
-  **Tech Stack: React.js, Node.js, MongoDB, JWT, Express, Vite**
+
+## 🛠️ Tech Stack
+- **Frontend:** React.js, Vite
+- **Backend:** Node.js, Express.js
+- **Database:** MongoDB
+- **Security:** JWT (JSON Web Tokens)
+- **AI Engineering:** RAG (Retrieval-Augmented Generation), Prompt Engineering, Context Injection
+
 
 ## Screenshots
 
 ### Home Page
-<img width="1918" height="881" alt="Image" src="https://github.com/user-attachments/assets/801d3b5a-a2ec-4c9b-a652-111a3416a107" />
+<img width="1920" height="878" alt="Image" src="https://github.com/user-attachments/assets/ba977cf9-55a1-40be-bbfe-7fb62a43dbfd" />
+
+### AI Assistant
+<img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/2e9576c1-e5b6-4fd2-80f6-c2bd733fb27d" />
 
 ### Product Filter by category
-<img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/9337972d-baea-494e-92f2-cf0e7f56922b" />
+<img width="1920" height="873" alt="Image" src="https://github.com/user-attachments/assets/2f4cb727-6d29-478b-9f3d-e8e454a2cb15" />
 
 ### Cart Section
-<img width="1920" height="881" alt="Image" src="https://github.com/user-attachments/assets/3807fb07-6259-485b-baf5-952628ff5825" />
+<img width="1920" height="872" alt="Image" src="https://github.com/user-attachments/assets/b77fc55d-31d1-4300-8b3a-72e02b98e32b" />
 
 ### Admin Login
-<img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/36500e74-950c-4562-a346-19dd894aac25" />
+<img width="1920" height="875" alt="Image" src="https://github.com/user-attachments/assets/6220109e-3549-4bee-8f7b-d0cad7e29c17" />
 
 ### Dynamically Product Adding Section
 <img width="1920" height="467" alt="Image" src="https://github.com/user-attachments/assets/23553e6b-f235-43eb-9049-52a7b0845a0e" />
