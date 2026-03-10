@@ -1,10 +1,8 @@
 /* CartPopup.css */
 .cart-modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: flex-end;
@@ -15,26 +13,35 @@
 
 .cart-modal-content {
   background: white;
-  width: 300px;
+  width: 340px;
   max-height: 90vh;
   overflow-y: auto;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 20px;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .close-btn {
   position: absolute;
-  top: 10px;
-  right: 15px;
+  top: 10px; right: 15px;
   background: crimson;
   color: white;
   border: none;
   padding: 4px 10px;
   cursor: pointer;
   border-radius: 5px;
+  font-size: 14px;
 }
 
+.empty-cart-msg {
+  text-align: center;
+  color: #888;
+  margin-top: 20px;
+}
+
+/* ── Cart items ──────────────────────────────── */
 .cart-items {
   display: flex;
   flex-direction: column;
@@ -47,32 +54,155 @@
   gap: 10px;
   align-items: center;
   background: #f9f9f9;
-  padding: 20px;
+  padding: 10px;
   border-radius: 6px;
 }
 
 .cart-item-img {
-  width: 50px;
-  height: 50px;
+  width: 50px; height: 50px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
-.cart-item-details h4 {
-  margin: 0;
-  font-size: 16px;
-}
+.cart-item-details h4 { margin: 0 0 2px 0; font-size: 15px; }
+.cart-item-price      { margin: 0 0 6px 0; font-size: 13px; color: #555; }
 
-.cart-item-details p {
-  margin: 0;
-  font-size: 14px;
-  color: #555;
-}
 .remove-btn {
-  margin-top: 8px;
-  padding: 5px 10px;
+  padding: 4px 10px;
   background-color: #ff5a5a;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 12px;
+}
+
+/* ── Cart footer ─────────────────────────────── */
+.cart-footer {
+  margin-top: 16px;
+  border-top: 1px solid #eee;
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cart-total { font-size: 16px; text-align: right; }
+
+.place-order-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.place-order-btn:hover:not(:disabled) { background-color: #1b5e20; }
+.place-order-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Customer details form ───────────────────── */
+.details-subtitle {
+  color: #666;
+  font-size: 13px;
+  margin: 4px 0 16px 0;
+}
+
+.customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.customer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.customer-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.customer-field input,
+.customer-field textarea {
+  padding: 9px 11px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+.customer-field input:focus,
+.customer-field textarea:focus {
+  border-color: #2e7d32;
+}
+
+.details-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.back-btn {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  background: #f1f1f1;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.back-btn:hover { background: #e5e5e5; }
+
+.order-summary-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5faf5;
+  border: 1px solid #c8e6c9;
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #444;
+}
+
+.order-error {
+  color: crimson;
+  font-size: 13px;
+  text-align: center;
+  margin: 0;
+}
+
+/* ── Success ─────────────────────────────────── */
+.order-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 10px;
+  text-align: center;
+  gap: 8px;
+}
+.order-success-icon  { font-size: 48px; }
+.order-success h3    { margin: 0; font-size: 20px; color: #2e7d32; }
+.order-success p     { color: #555; font-size: 14px; margin: 0; }
+.success-sub         { color: #888 !important; font-size: 13px !important; }
+
+.close-after-order-btn {
+  margin-top: 12px;
+  padding: 8px 24px;
+  background: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
 }

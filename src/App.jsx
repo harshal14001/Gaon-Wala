@@ -6,10 +6,7 @@ import Icons from "./Icons/Icons";
 import Products from "./Products/Products";
 import Scroll from "./Top_Scroll/Scroll";
 import CartPopup from "./Cart/CartPopup";
-
-// Chat Widget Import
-import AIChatWidget from "./Components/AIChatWidget"; 
-
+import AIChatWidget from "./Components/AIChatWidget";
 import AdminLogin from "./Components/AdminLogin.jsx";
 import AdminDashboard from "./Components/AdminDashboard.jsx";
 
@@ -41,7 +38,6 @@ const App = () => {
     setIsAdmin(false);
   };
 
-  // 👇 UPDATED: No more alert popup!
   const handleAddToCart = (product) => {
     const exist = cart.find((x) => x._id === product._id);
     if (exist) {
@@ -49,14 +45,15 @@ const App = () => {
     } else {
       setCart([...cart, { ...product, qty: 1 }]);
     }
-    // alert(`${product.title} added to cart! 🛒`); // ❌ REMOVED THIS LINE
-    
-    // Optional: Open the cart immediately to show it was added
-    // setShowCart(true); 
   };
 
   const handleRemoveFromCart = (productId) => {
     setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
+  };
+
+  // Called after a successful order — clears the cart
+  const handleOrderPlaced = () => {
+    setCart([]);
   };
 
   return isAdmin ? (
@@ -68,7 +65,7 @@ const App = () => {
         cart={cart}
         onCartClick={() => setShowCart(true)}
         onSearch={setSearchQuery}
-        onAdminClick={() => setShowAdminModal(true)} 
+        onAdminClick={() => setShowAdminModal(true)}
       />
       <Icons onCategorySelect={setSelectedCategory} />
       <Products
@@ -78,7 +75,6 @@ const App = () => {
         setCart={setCart}
       />
 
-      {/* Chat Widget */}
       <AIChatWidget onAddToCart={handleAddToCart} />
 
       {showCart && (
@@ -86,6 +82,7 @@ const App = () => {
           cart={cart}
           onClose={() => setShowCart(false)}
           onRemoveFromCart={handleRemoveFromCart}
+          onOrderPlaced={handleOrderPlaced}
         />
       )}
 
