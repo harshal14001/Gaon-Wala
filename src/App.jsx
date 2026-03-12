@@ -38,20 +38,38 @@ const App = () => {
     setIsAdmin(false);
   };
 
+  // Used by AIChatWidget
   const handleAddToCart = (product) => {
     const exist = cart.find((x) => x._id === product._id);
     if (exist) {
-      setCart(cart.map((x) => x._id === product._id ? { ...exist, qty: exist.qty + 1 } : x));
+      const newQty = exist.qty + 1;
+      if (newQty > (product.stock ?? Infinity)) return; // respect stock
+      setCart(cart.map((x) => x._id === product._id ? { ...exist, qty: newQty } : x));
     } else {
+      if ((product.stock ?? 1) === 0) return;
       setCart([...cart, { ...product, qty: 1 }]);
     }
   };
 
   const handleRemoveFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
+    setCart((prev) => prev.filter((item) => item._id !== productId));
   };
 
-  // Called after a successful order — clears the cart
+  // Called from CartPopup stepper — set qty; remove if 0
+  const handleUpdateQty = (productId, newQty) => {
+    if (newQty <= 0) {
+      setCart((prev) => prev.filter((item) => item._id !== productId));
+    } else {
+      setCart((prev) =>
+        prev.map((item) => {
+          if (item._id !== productId) return item;
+          const capped = Math.min(newQty, item.stock ?? newQty);
+          return { ...item, qty: capped };
+        })
+      );
+    }
+  };
+
   const handleOrderPlaced = () => {
     setCart([]);
   };
@@ -82,6 +100,7 @@ const App = () => {
           cart={cart}
           onClose={() => setShowCart(false)}
           onRemoveFromCart={handleRemoveFromCart}
+          onUpdateQty={handleUpdateQty}
           onOrderPlaced={handleOrderPlaced}
         />
       )}

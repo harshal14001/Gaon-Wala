@@ -4,8 +4,8 @@ import "./CartPopup.css";
 
 const EMPTY_CUSTOMER = { name: "", phone: "", address: "" };
 
-const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced }) => {
-  const [step, setStep] = useState("cart");         // "cart" | "details" | "success"
+const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty }) => {
+  const [step, setStep] = useState("cart");
   const [customer, setCustomer] = useState(EMPTY_CUSTOMER);
   const [formError, setFormError] = useState("");
   const [ordering, setOrdering] = useState(false);
@@ -20,13 +20,7 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced }) => {
     setFormError("");
   };
 
-  const handleProceed = () => {
-    if (cart.length === 0) return;
-    setStep("details");
-  };
-
   const handlePlaceOrder = async () => {
-    // Basic validation
     if (!customer.name.trim())    return setFormError("Please enter your name.");
     if (!customer.phone.trim())   return setFormError("Please enter your phone number.");
     if (!/^\d{10}$/.test(customer.phone.trim()))
@@ -47,7 +41,7 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced }) => {
           title:     item.title,
           price:     Number(item.price) || 0,
           image:     item.image || "",
-          qty:       Number(item.qty)   || 1,
+          qty:       Number(item.qty) || 1,
         })),
         total: parseFloat(total.toFixed(2)),
       });
@@ -65,7 +59,7 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced }) => {
       <div className="cart-modal-content">
         <button className="close-btn" onClick={onClose}>✕</button>
 
-        {/* ── STEP 1: Cart items ── */}
+        {/* ── STEP 1: Cart ── */}
         {step === "cart" && (
           <>
             <h2>Your Cart 🛒</h2>
@@ -79,21 +73,36 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced }) => {
                       <img src={item.image} alt={item.title} className="cart-item-img" />
                       <div className="cart-item-details">
                         <h4>{item.title}</h4>
-                        <p className="cart-item-price">
-                          ₹{Number(item.price).toFixed(2)} × {item.qty || 1}
+                        <p className="cart-item-unit-price">₹{Number(item.price).toFixed(2)} each</p>
+
+                        {/* Qty stepper inside cart */}
+                        <div className="cart-qty-stepper">
+                          <button
+                            className="cart-qty-btn"
+                            onClick={() => onUpdateQty(item._id, (item.qty || 1) - 1)}
+                          >−</button>
+                          <span className="cart-qty-display">{item.qty || 1}</span>
+                          <button
+                            className={`cart-qty-btn ${item.qty >= item.stock ? "cart-qty-disabled" : ""}`}
+                            onClick={() => onUpdateQty(item._id, (item.qty || 1) + 1)}
+                            disabled={item.qty >= item.stock}
+                            title={item.qty >= item.stock ? `Max ${item.stock} available` : ""}
+                          >+</button>
+                        </div>
+
+                        <p className="cart-line-total">
+                          ₹{(Number(item.price) * (item.qty || 1)).toFixed(2)}
                         </p>
-                        <button className="remove-btn" onClick={() => onRemoveFromCart(item._id)}>
-                          Remove
-                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
+
                 <div className="cart-footer">
                   <div className="cart-total">
                     Total: <strong>₹{total.toFixed(2)}</strong>
                   </div>
-                  <button className="place-order-btn" onClick={handleProceed}>
+                  <button className="place-order-btn" onClick={() => setStep("details")}>
                     Proceed to Order →
                   </button>
                 </div>
@@ -102,7 +111,7 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced }) => {
           </>
         )}
 
-        {/* ── STEP 2: Customer details form ── */}
+        {/* ── STEP 2: Customer details ── */}
         {step === "details" && (
           <>
             <h2>Delivery Details 📦</h2>
@@ -111,33 +120,19 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced }) => {
             <div className="customer-form">
               <div className="customer-field">
                 <label>Full Name</label>
-                <input
-                  name="name"
-                  placeholder="e.g. Ramesh Patil"
-                  value={customer.name}
-                  onChange={handleCustomerChange}
-                />
+                <input name="name" placeholder="e.g. Ramesh Patil"
+                  value={customer.name} onChange={handleCustomerChange} />
               </div>
               <div className="customer-field">
                 <label>Phone Number</label>
-                <input
-                  name="phone"
-                  placeholder="10-digit mobile number"
-                  value={customer.phone}
-                  onChange={handleCustomerChange}
-                  maxLength={10}
-                  type="tel"
-                />
+                <input name="phone" placeholder="10-digit mobile number"
+                  value={customer.phone} onChange={handleCustomerChange}
+                  maxLength={10} type="tel" />
               </div>
               <div className="customer-field">
                 <label>Delivery Address</label>
-                <textarea
-                  name="address"
-                  placeholder="House no., Street, Village/City, PIN code"
-                  value={customer.address}
-                  onChange={handleCustomerChange}
-                  rows={3}
-                />
+                <textarea name="address" placeholder="House no., Street, Village/City, PIN code"
+                  value={customer.address} onChange={handleCustomerChange} rows={3} />
               </div>
 
               {formError  && <p className="order-error">{formError}</p>}
@@ -145,11 +140,7 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced }) => {
 
               <div className="details-actions">
                 <button className="back-btn" onClick={() => setStep("cart")}>← Back</button>
-                <button
-                  className="place-order-btn"
-                  onClick={handlePlaceOrder}
-                  disabled={ordering}
-                >
+                <button className="place-order-btn" onClick={handlePlaceOrder} disabled={ordering}>
                   {ordering ? "Placing..." : "Place Order 🛍️"}
                 </button>
               </div>

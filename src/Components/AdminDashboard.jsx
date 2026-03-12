@@ -3,10 +3,11 @@ import axios from "axios";
 import "./AdminDashboard.css";
 
 const STATUS_OPTIONS = ["Pending", "Confirmed", "Delivered", "Cancelled"];
+const CATEGORIES = ["Vegetable", "Fruit", "Milk Products", "Plants", "Seeds"];
 
 const AdminDashboard = ({ onLogout }) => {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ title: "", price: "", image: "", category: "" });
+  const [form, setForm] = useState({ title: "", price: "", image: "", category: "", stock: "50" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -58,9 +59,7 @@ const AdminDashboard = ({ onLogout }) => {
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setOrders((prev) =>
-        prev.map((o) => (o._id === orderId ? { ...o, status: res.data.status } : o))
-      );
+      setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, status: res.data.status } : o)));
     } catch {
       alert("Failed to update status.");
     }
@@ -89,12 +88,12 @@ const AdminDashboard = ({ onLogout }) => {
     setLoading(true);
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([k, v]) => v && formData.append(k, v));
+      Object.entries(form).forEach(([k, v]) => v !== "" && formData.append(k, v));
       const res = await axios.post("http://localhost:5000/api/products", formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProducts([...products, res.data]);
-      setForm({ title: "", price: "", image: "", category: "" });
+      setForm({ title: "", price: "", image: "", category: "", stock: "50" });
       setError("");
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
@@ -107,7 +106,14 @@ const AdminDashboard = ({ onLogout }) => {
     setProducts((prev) =>
       prev.map((p) =>
         p._id === product._id
-          ? { ...p, isEditing: true, editForm: { title: product.title, price: product.price, image: product.image, category: product.category } }
+          ? {
+              ...p, isEditing: true,
+              editForm: {
+                title: product.title, price: product.price,
+                image: product.image, category: product.category,
+                stock: product.stock ?? 50,
+              },
+            }
           : { ...p, isEditing: false }
       )
     );
@@ -122,6 +128,7 @@ const AdminDashboard = ({ onLogout }) => {
       payload.append("title", data.title);
       payload.append("price", data.price);
       payload.append("category", data.category);
+      payload.append("stock", data.stock);
       if (data.image) payload.append("image", data.image);
       const res = await axios.put(`http://localhost:5000/api/products/${product._id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -152,12 +159,20 @@ const AdminDashboard = ({ onLogout }) => {
     }
   };
 
-  const statusClass = (status) => ({
-    Pending:   "status-pending",
-    Confirmed: "status-confirmed",
-    Delivered: "status-delivered",
-    Cancelled: "status-cancelled",
-  }[status] || "");
+  const statusClass = (s) => ({ Pending: "status-pending", Confirmed: "status-confirmed", Delivered: "status-delivered", Cancelled: "status-cancelled" }[s] || "");
+
+  const stockLabel = (stock) => {
+    if (stock === 0)  return <span className="stock-tag stock-out">Out of Stock</span>;
+    if (stock <= 5)   return <span className="stock-tag stock-low">{stock} left</span>;
+    return <span className="stock-tag stock-ok">{stock} in stock</span>;
+  };
+
+  const categorySelect = (name, value, onChange, style = {}) => (
+    <select name={name} value={value} onChange={onChange} required className="category-select" style={{ padding: "8px", borderRadius: "5px", border: "1px solid #ccc", ...style }}>
+      <option value="">Select Category</option>
+      {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+    </select>
+  );
 
   return (
     <div className="admin-dashboard-container">
@@ -179,15 +194,13 @@ const AdminDashboard = ({ onLogout }) => {
         <div className="orders-panel">
           <h3>All Orders</h3>
           {ordersLoading && <p className="orders-loading">Loading orders...</p>}
-          {ordersError && <p className="orders-error">{ordersError}</p>}
+          {ordersError   && <p className="orders-error">{ordersError}</p>}
           {!ordersLoading && !ordersError && orders.length === 0 && (
             <p className="no-orders">No orders yet.</p>
           )}
 
           {orders.map((order) => (
             <div key={order._id} className="order-card">
-
-              {/* Top row: order meta + status */}
               <div className="order-card-header">
                 <div className="order-meta">
                   <span className="order-id">Order #{order._id.slice(-6).toUpperCase()}</span>
@@ -199,22 +212,13 @@ const AdminDashboard = ({ onLogout }) => {
                   </span>
                 </div>
                 <div className="order-card-right">
-                  <span className={`status-badge ${statusClass(order.status)}`}>
-                    {order.status}
-                  </span>
-                  <select
-                    value={order.status}
-                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                    className="status-select"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
+                  <span className={`status-badge ${statusClass(order.status)}`}>{order.status}</span>
+                  <select value={order.status} onChange={(e) => handleStatusChange(order._id, e.target.value)} className="status-select">
+                    {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
 
-              {/* Customer info block */}
               {order.customer && (
                 <div className="customer-info-block">
                   <div className="customer-info-row">
@@ -223,9 +227,7 @@ const AdminDashboard = ({ onLogout }) => {
                   </div>
                   <div className="customer-info-row">
                     <span className="customer-info-icon">📞</span>
-                    <a href={`tel:${order.customer.phone}`} className="customer-phone">
-                      {order.customer.phone}
-                    </a>
+                    <a href={`tel:${order.customer.phone}`} className="customer-phone">{order.customer.phone}</a>
                   </div>
                   <div className="customer-info-row">
                     <span className="customer-info-icon">📍</span>
@@ -234,7 +236,6 @@ const AdminDashboard = ({ onLogout }) => {
                 </div>
               )}
 
-              {/* Order items */}
               <div className="order-items">
                 {order.items.map((item, idx) => (
                   <div key={idx} className="order-item-row">
@@ -246,9 +247,7 @@ const AdminDashboard = ({ onLogout }) => {
                 ))}
               </div>
 
-              <div className="order-total">
-                Total: <strong>₹{order.total.toFixed(2)}</strong>
-              </div>
+              <div className="order-total">Total: <strong>₹{order.total.toFixed(2)}</strong></div>
             </div>
           ))}
         </div>
@@ -258,18 +257,11 @@ const AdminDashboard = ({ onLogout }) => {
       {view === "products" && (
         <>
           <form className="product-form" onSubmit={handleAdd}>
-            <input name="title" placeholder="Title" value={form.title || ""} onChange={handleFormChange} required />
-            <input name="price" type="number" placeholder="Price ₹" value={form.price || ""} onChange={handleFormChange} required />
-            <input name="image" type="text" placeholder="Paste Cloudinary image URL" value={form.image || ""} onChange={handleFormChange} />
-            <select name="category" value={form.category || ""} onChange={handleFormChange} required className="category-select"
-              style={{ padding: "10px", margin: "5px", borderRadius: "5px", border: "1px solid #ccc" }}>
-              <option value="">Select Category</option>
-              <option value="Vegetable">Vegetable</option>
-              <option value="Fruit">Fruit</option>
-              <option value="Milk Products">Milk Products</option>
-              <option value="Plants">Plants</option>
-              <option value="Seeds">Seeds</option>
-            </select>
+            <input name="title" placeholder="Title" value={form.title} onChange={handleFormChange} required />
+            <input name="price" type="number" placeholder="Price ₹" value={form.price} onChange={handleFormChange} required />
+            <input name="image" type="text" placeholder="Paste Cloudinary image URL" value={form.image} onChange={handleFormChange} />
+            {categorySelect("category", form.category, handleFormChange, { margin: "5px 0" })}
+            <input name="stock" type="number" placeholder="Stock quantity" value={form.stock} onChange={handleFormChange} min="0" required />
             <button type="submit" className="add-btn" disabled={loading}>{loading ? "Adding..." : "Add Product"}</button>
             {error && <p className="form-error">{error}</p>}
           </form>
@@ -283,8 +275,8 @@ const AdminDashboard = ({ onLogout }) => {
                     <img src={product.image} alt={product.title} />
                     <div className="product-details">
                       <h4>{product.title}</h4>
-                      <p>₹{product.price}</p>
-                      <p>{product.category}</p>
+                      <p>₹{product.price} &nbsp;·&nbsp; {product.category}</p>
+                      {stockLabel(product.stock ?? 0)}
                     </div>
                     <div className="product-actions">
                       <button onClick={() => handleEdit(product)} className="edit-btn">Edit</button>
@@ -292,18 +284,12 @@ const AdminDashboard = ({ onLogout }) => {
                     </div>
                   </>
                 ) : (
-                  <form className="edit-form" onSubmit={(e) => handleUpdate(e, product)}>
+                  <form className="edit-form" onSubmit={(e) => handleUpdate(e, product)} style={{ width: "100%" }}>
                     <input name="title" value={product.editForm.title} onChange={(e) => handleInlineChange(product._id, e)} required />
                     <input name="price" type="number" value={product.editForm.price} onChange={(e) => handleInlineChange(product._id, e)} required />
                     <input name="image" type="text" placeholder="Paste Image URL" value={product.editForm.image || ""} onChange={(e) => handleInlineChange(product._id, e)} />
-                    <select name="category" value={product.editForm.category} onChange={(e) => handleInlineChange(product._id, e)} required style={{ padding: "5px", borderRadius: "5px" }}>
-                      <option value="">Select Category</option>
-                      <option value="Vegetable">Vegetable</option>
-                      <option value="Fruit">Fruit</option>
-                      <option value="Milk Products">Milk Products</option>
-                      <option value="Plants">Plants</option>
-                      <option value="Seeds">Seeds</option>
-                    </select>
+                    {categorySelect("category", product.editForm.category, (e) => handleInlineChange(product._id, e))}
+                    <input name="stock" type="number" placeholder="Stock" value={product.editForm.stock ?? 50} onChange={(e) => handleInlineChange(product._id, e)} min="0" required />
                     <div className="edit-buttons">
                       <button type="submit" className="add-btn" disabled={loading}>{loading ? "Saving..." : "Update"}</button>
                       <button type="button" className="delete-btn" onClick={() => handleCancelEdit(product._id)}>Cancel</button>

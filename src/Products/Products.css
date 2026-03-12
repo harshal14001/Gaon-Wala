@@ -1,121 +1,168 @@
-/* Container grid */
+/* Products.css */
+
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 2rem;
   padding: 2rem;
   max-width: 1200px;
   margin: auto;
 }
 
-/* Card itself */
+/* ── Card ─────────────────────────────────── */
 .product-card {
-  background-color: #fff;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
   text-align: center;
-  padding: 1.5rem;
+  padding: 1.2rem 1rem 1rem;
   transition: transform 0.2s ease;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+.product-card:hover { transform: translateY(-4px); }
+
+.out-of-stock-card {
+  opacity: 0.72;
+  background: #fafafa;
 }
 
-/* Hover effect */
-.product-card:hover {
-  transform: translateY(-4px);
+/* ── Stock badges ─────────────────────────── */
+.stock-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
-/* Product image */
+.out-of-stock-badge {
+  background: #fde8e8;
+  color: #c62828;
+  border: 1px solid #f5c6c6;
+}
+
+.low-stock-badge {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffe083;
+}
+
+/* ── Image ────────────────────────────────── */
 .product-image {
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   object-fit: contain;
-  margin: 0 auto 1rem;
+  margin: 0.4rem auto 0.8rem;
 }
+.img-greyed { filter: grayscale(60%); }
 
-/* Title and price */
+/* ── Text ─────────────────────────────────── */
 .product-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #333;
-  margin: 0.5rem 0;
+  margin: 0.3rem 0;
 }
-
 .product-price {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #777;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 }
 
-/* Button group */
+/* ── Buttons area ─────────────────────────── */
 .cart-buttons {
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
+  margin-top: auto;
+  width: 100%;
 }
 
-/* All buttons */
-.add-to-cart-btn,
-.in-cart-btn,
-.remove-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+.add-to-cart-btn {
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
   font-size: 0.9rem;
   cursor: pointer;
   border: none;
-  transition: background 0.2s ease;
-}
-
-/* Button styles */
-.add-to-cart-btn {
-  background-color: #1d884a;
+  background: #1d884a;
   color: #fff;
+  transition: background 0.2s;
+  width: 100%;
+}
+.add-to-cart-btn:hover { background: #157a3f; }
+
+.out-of-stock-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: none;
+  background: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+  width: 100%;
 }
 
-.add-to-cart-btn:hover {
-  background-color: #157a3f;
+/* ── Qty stepper ──────────────────────────── */
+.qty-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  border: 2px solid #1d884a;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
 }
 
-.in-cart-btn {
-  background-color: #ccc;
-  color: #333;
-  cursor: default;
-}
-
-.remove-btn {
-  background-color: #ff4d4d;
+.qty-btn {
+  background: #1d884a;
   color: white;
+  border: none;
+  padding: 6px 14px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.qty-btn:hover:not(:disabled) { background: #157a3f; }
+
+.qty-btn-disabled,
+.qty-btn:disabled {
+  background: #a5d6b7;
+  cursor: not-allowed;
 }
 
-.remove-btn:hover {
-  background-color: #e60000;
-}
-
-/* Cart section */
-.cart-container {
-  padding: 2rem;
-  background-color: #f9f9f9;
-  border-top: 2px solid #eee;
-  max-width: 900px;
-  margin: 2rem auto;
-  font-family: sans-serif;
-}
-
-.cart-container h2 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.cart-container ul {
-  list-style: none;
-  padding-left: 0;
-}
-
-.cart-container li {
-  margin-bottom: 0.5rem;
+.qty-display {
+  flex: 1;
+  text-align: center;
   font-size: 1rem;
-  color: #333;
+  font-weight: 700;
+  color: #1d884a;
+  padding: 6px 4px;
+  background: #fff;
+  min-width: 32px;
+}
+
+/* ── Subtotal under stepper ───────────────── */
+.cart-subtotal {
+  font-size: 12px;
+  color: #2e7d32;
+  font-weight: 600;
+  margin: 6px 0 0;
+}
+
+/* ── No products message ──────────────────── */
+.no-products-message {
+  text-align: center;
+  color: #999;
+  grid-column: 1 / -1;
+  padding: 3rem 0;
 }
