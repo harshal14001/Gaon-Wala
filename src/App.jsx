@@ -38,12 +38,11 @@ const App = () => {
     setIsAdmin(false);
   };
 
-  // Used by AIChatWidget
   const handleAddToCart = (product) => {
     const exist = cart.find((x) => x._id === product._id);
     if (exist) {
       const newQty = exist.qty + 1;
-      if (newQty > (product.stock ?? Infinity)) return; // respect stock
+      if (newQty > (product.stock ?? Infinity)) return;
       setCart(cart.map((x) => x._id === product._id ? { ...exist, qty: newQty } : x));
     } else {
       if ((product.stock ?? 1) === 0) return;
@@ -55,7 +54,6 @@ const App = () => {
     setCart((prev) => prev.filter((item) => item._id !== productId));
   };
 
-  // Called from CartPopup stepper — set qty; remove if 0
   const handleUpdateQty = (productId, newQty) => {
     if (newQty <= 0) {
       setCart((prev) => prev.filter((item) => item._id !== productId));
@@ -70,9 +68,7 @@ const App = () => {
     }
   };
 
-  const handleOrderPlaced = () => {
-    setCart([]);
-  };
+  const handleOrderPlaced = () => setCart([]);
 
   return isAdmin ? (
     <AdminDashboard onLogout={handleLogout} />
@@ -93,7 +89,12 @@ const App = () => {
         setCart={setCart}
       />
 
-      <AIChatWidget onAddToCart={handleAddToCart} />
+      {/* ✅ cart + onUpdateQty now passed so widget knows what's in the cart */}
+      <AIChatWidget
+        cart={cart}
+        onAddToCart={handleAddToCart}
+        onUpdateQty={handleUpdateQty}
+      />
 
       {showCart && (
         <CartPopup

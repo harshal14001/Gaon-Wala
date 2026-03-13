@@ -6,7 +6,7 @@ import Product from "../Models/Products.js";
 import {
   getProducts,
   addProduct,
-  updateProduct, // ✅ Imported only once here
+  updateProduct, 
   deleteProduct,
 } from '../Controllers/productController.js';
 import { protectAdmin } from '../Middlewares/authMiddleware.js';
