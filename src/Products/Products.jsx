@@ -1,9 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
+import { API_URL } from "../config.js";
 import "./Products.css";
 
 const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
   const [allProducts, setAllProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   // tracks which product ids are in the "just added" flash state
   const [flashSet, setFlashSet]   = useState(new Set());
   // tracks which qty display is animating (bounce)
@@ -12,9 +15,26 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
   const [shakeSet, setShakeSet]   = useState(new Set());
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/products")
-      .then((res) => setAllProducts(res.data))
-      .catch((err) => console.error("Failed to fetch products:", err));
+    let isMounted = true;
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API_URL}/api/products`);
+        if (isMounted) {
+          setAllProducts(res.data);
+          setError("");
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error("Failed to fetch products:", err);
+          setError("Failed to load products");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchProducts();
+    return () => { isMounted = false; };
   }, []);
 
   const filteredProducts = allProducts

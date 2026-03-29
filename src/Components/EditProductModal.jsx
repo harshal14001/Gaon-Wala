@@ -1,6 +1,7 @@
 // EditProductModal.jsx
 import React, { useState } from "react";
 import axios from "axios";
+import { API_URL } from "../config.js";
 import "./AdminDashboard.css";
 
 const EditProductModal = ({ product, onClose, onUpdated }) => {
@@ -49,7 +50,7 @@ const EditProductModal = ({ product, onClose, onUpdated }) => {
         formData.append("image", form.image);
       }
 
-      const res = await axios.put(`http://localhost:5000/api/products/${product._id}`, formData, {
+      const res = await axios.put(`${API_URL}/api/products/${product._id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           // Axios handles Content-Type automatically

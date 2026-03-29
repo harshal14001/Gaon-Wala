@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { API_URL } from "../config.js";
 import "./AdminDashboard.css";
 
 const STATUS_OPTIONS = ["Pending", "Confirmed", "Delivered", "Cancelled"];
-const CATEGORIES = ["Vegetable", "Fruit", "Milk Products", "Plants", "Seeds"];
+const CATEGORIES = ["Vegetable", "Fruit", "Milk Products", "Plants", "Seeds", "Other"];
 
 const AdminDashboard = ({ onLogout }) => {
   const [products, setProducts] = useState([]);
@@ -22,7 +23,7 @@ const AdminDashboard = ({ onLogout }) => {
     const fetchProducts = async () => {
       try {
         if (!token) { onLogout(); return; }
-        const res = await axios.get("http://localhost:5000/api/products", {
+        const res = await axios.get(`${API_URL}/api/products`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProducts(Array.isArray(res.data) ? res.data : []);
@@ -39,7 +40,7 @@ const AdminDashboard = ({ onLogout }) => {
       setOrdersLoading(true);
       setOrdersError("");
       try {
-        const res = await axios.get("http://localhost:5000/api/orders", {
+        const res = await axios.get(`${API_URL}/api/orders`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setOrders(res.data);
@@ -55,7 +56,7 @@ const AdminDashboard = ({ onLogout }) => {
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       const res = await axios.patch(
-        `http://localhost:5000/api/orders/${orderId}/status`,
+        `${API_URL}/api/orders/${orderId}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -89,7 +90,7 @@ const AdminDashboard = ({ onLogout }) => {
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([k, v]) => v !== "" && formData.append(k, v));
-      const res = await axios.post("http://localhost:5000/api/products", formData, {
+      const res = await axios.post(`${API_URL}/api/products`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProducts([...products, res.data]);
@@ -130,7 +131,7 @@ const AdminDashboard = ({ onLogout }) => {
       payload.append("category", data.category);
       payload.append("stock", data.stock);
       if (data.image) payload.append("image", data.image);
-      const res = await axios.put(`http://localhost:5000/api/products/${product._id}`, payload, {
+      const res = await axios.put(`${API_URL}/api/products/${product._id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProducts((prev) =>
@@ -150,7 +151,7 @@ const AdminDashboard = ({ onLogout }) => {
   const handleDelete = async (id) => {
     if (!window.confirm("Confirm delete?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/products/${id}`, {
+      await axios.delete(`${API_URL}/api/products/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProducts(products.filter((p) => p._id !== id));

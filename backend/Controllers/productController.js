@@ -1,4 +1,20 @@
 import Products from "../Models/Products.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+if (!process.env.GEMINI_API_KEY) {
+  console.error("⚠️  GEMINI_API_KEY not configured - embedding features will fail");
+}
+
+// ── Embedding helper ───────────────────────────────────────────────────────
+// gemini-embedding-001 outputs 3072-dimensional vectors
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+
+const generateEmbedding = async (product) => {
+  const text = `Product: ${product.title}. Category: ${product.category}. Price: ₹${product.price}.`;
+  const result = await embeddingModel.embedContent(text);
+  return result.embedding.values; // 3072 numbers 
+};
 
 // GET all products
 export const getProducts = async (req, res) => {
@@ -20,6 +36,16 @@ export const addProduct = async (req, res) => {
       return res.status(400).json({ message: "Missing fields" });
     }
 
+    const numPrice = Number(price);
+    if (isNaN(numPrice) || numPrice <= 0) {
+      return res.status(400).json({ message: "Price must be a positive number" });
+    }
+
+    const numStock = stock !== undefined ? Number(stock) : 50;
+    if (isNaN(numStock) || numStock < 0) {
+      return res.status(400).json({ message: "Stock cannot be negative" });
+    }
+
     let imagePath = "";
     if (req.file) {
       imagePath = `${process.env.BASE_URL || "http://localhost:5000"}/uploads/${req.file.filename}`;
@@ -29,11 +55,21 @@ export const addProduct = async (req, res) => {
 
     const newProduct = await Products.create({
       title,
-      price,
+      price: numPrice,
       category,
       image: imagePath,
-      stock: stock !== undefined ? Number(stock) : 50,
+      stock: numStock,
     });
+
+    // ✅ Auto-embed after creation so it's immediately searchable via vector search
+    // Non-blocking — product is created even if embedding fails
+    try {
+      const embedding = await generateEmbedding(newProduct);
+      await Products.updateOne({ _id: newProduct._id }, { $set: { embedding } });
+      console.log(`✅ Auto-embedded: ${newProduct.title}`);
+    } catch (embedErr) {
+      console.error(`⚠️ Embedding failed for "${newProduct.title}" (run vectorize.js manually):`, embedErr.message);
+    }
 
     res.status(201).json(newProduct);
   } catch (err) {
@@ -51,7 +87,19 @@ export const updateProduct = async (req, res) => {
     let updateData = { title, price, category };
 
     if (stock !== undefined) {
-      updateData.stock = Number(stock);
+      const numStock = Number(stock);
+      if (isNaN(numStock) || numStock < 0) {
+        return res.status(400).json({ message: "Stock cannot be negative" });
+      }
+      updateData.stock = numStock;
+    }
+
+    if (price !== undefined) {
+      const numPrice = Number(price);
+      if (isNaN(numPrice) || numPrice <= 0) {
+        return res.status(400).json({ message: "Price must be a positive number" });
+      }
+      updateData.price = numPrice;
     }
 
     if (req.file) {
@@ -61,6 +109,16 @@ export const updateProduct = async (req, res) => {
     }
 
     const updated = await Products.findByIdAndUpdate(id, updateData, { new: true });
+
+    // ✅ Re-embed on update — title/category/price change affects semantic meaning
+    try {
+      const embedding = await generateEmbedding(updated);
+      await Products.updateOne({ _id: updated._id }, { $set: { embedding } });
+      console.log(`✅ Re-embedded: ${updated.title}`);
+    } catch (embedErr) {
+      console.error(`⚠️ Re-embedding failed for "${updated.title}":`, embedErr.message);
+    }
+
     res.json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });

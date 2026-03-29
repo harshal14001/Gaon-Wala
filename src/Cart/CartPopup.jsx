@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { API_URL } from "../config.js";
 import "./CartPopup.css";
 
 const EMPTY_CUSTOMER = { name: "", phone: "", address: "" };
@@ -30,7 +31,7 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty
     setOrdering(true);
     setOrderError("");
     try {
-      await axios.post("http://localhost:5000/api/orders", {
+      await axios.post(`${API_URL}/api/orders`, {
         customer: {
           name:    customer.name.trim(),
           phone:   customer.phone.trim(),
@@ -73,7 +74,7 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty
                       <img src={item.image} alt={item.title} className="cart-item-img" />
                       <div className="cart-item-details">
                         <h4>{item.title}</h4>
-                        <p className="cart-item-unit-price">₹{Number(item.price).toFixed(2)} each</p>
+                        <p className="cart-item-unit-price">₹{Number(item.price).toFixed(2)} </p>
 
                         {/* Qty stepper inside cart */}
                         <div className="cart-qty-stepper">
