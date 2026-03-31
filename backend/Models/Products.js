@@ -6,10 +6,17 @@ const productSchema = new mongoose.Schema({
   image:     { type: String },
   category:  { type: String,   required: true },
   stock:     { type: Number,   required: true, default: 50, min: 0 },
-  // ✅ Vector embedding field — populated by vectorize.js, searched by aiRoutes.js
+
+  createdBy:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref:'Admin'
+  },
+
+  // Vector embedding field — populated by vectorize.js, searched by aiRoutes.js
   embedding: { type: [Number], default: undefined, select: false },
-  //   select: false → never returned in normal .find() queries, saves bandwidth
-});
+  // select: false → never returned in normal .find() queries, saves bandwidth
+
+},{timestamps:true});
 
 const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
 export default Product;

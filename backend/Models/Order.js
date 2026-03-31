@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 
 const orderItemSchema = new mongoose.Schema({
   productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
@@ -19,6 +19,11 @@ const orderSchema = new mongoose.Schema({
   items:    { type: [orderItemSchema], required: true },
   total:    { type: Number, required: true },
   status:   { type: String, default: "Pending", enum: ["Pending", "Confirmed", "Delivered", "Cancelled"] },
+
+  createdBy:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref:'User'
+  }
 }, { timestamps: true });
 
 export default mongoose.model("Order", orderSchema);

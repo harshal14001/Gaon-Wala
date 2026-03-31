@@ -1,30 +1,26 @@
 import express from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateSalesPrompt } from '../utils/promptTemplates.js';
 import Product from '../Models/Products.js';
 
 const router = express.Router();
 
-if (!process.env.GEMINI_API_KEY) {
-  console.error("⚠️  GEMINI_API_KEY not configured - AI features will fail");
-}
+const genAI     = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const chatModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// Only the embedding model — no chat model, zero chat API tokens spent
-const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
-
-// ── Retry helper for embedding (only Gemini call we make) ─────────────────
-const embedWithRetry = async (text, retries = 3, delayMs = 800) => {
-    for (let attempt = 1; attempt <= retries; attempt++) {
+// ── Gemini call with exponential backoff on 503 / 429 ─────────────────────
+const askGemini = async (prompt, retries = 3, delayMs = 1500) => {
+    for (let i = 1; i <= retries; i++) {
         try {
-            const result = await embeddingModel.embedContent(text);
-            return result.embedding.values;
+            const result = await chatModel.generateContent(prompt);
+            return result.response.text();
         } catch (err) {
-            const is503 = err?.status === 503 || err?.message?.includes("503");
-            if (is503 && attempt < retries) {
-                console.warn(`⚠️  Embedding 503 — attempt ${attempt}/${retries}, retrying in ${delayMs}ms...`);
-                await new Promise(res => setTimeout(res, delayMs));
-                delayMs *= 2;
+            const code     = err?.status;
+            const retryable = code === 503 || code === 429;
+            console.warn(`⚠️  Gemini attempt ${i}/${retries} — status ${code}`);
+            if (retryable && i < retries) {
+                await new Promise(r => setTimeout(r, delayMs));
+                delayMs *= 2;   // 1.5s → 3s → 6s
             } else {
                 throw err;
             }
@@ -32,108 +28,69 @@ const embedWithRetry = async (text, retries = 3, delayMs = 800) => {
     }
 };
 
-// ── Step 1: Check if query mentions a specific product by name ─────────────
-// Matches "mangoes" → "Mango", "onion" → "Onion", etc.
-// Returns the DB title string if found, null otherwise.
-// Zero Gemini calls — pure string matching.
-const findMentionedProduct = (query, allProducts) => {
-    const q = query.toLowerCase();
-    for (const product of allProducts) {
-        const t = product.title.toLowerCase();
-        if (
-            q.includes(t) ||                          // exact: "mango"
-            q.includes(t + 's') ||                    // plural: "mangos"
-            q.includes(t + 'es') ||                   // plural: "mangoes"
-            (t.endsWith('s')  && q.includes(t.slice(0, -1))) ||   // "onions" → "onion"
-            (t.endsWith('es') && q.includes(t.slice(0, -2)))       // "tomatoes" → "tomato"
-        ) {
-            return product; // return full product object
+// ── PATH 1: Greeting — zero DB, zero tokens ───────────────────────────────
+const isGreeting = (q) =>
+    /^(hi+|hello|namaste|hey|good\s*(morning|evening|afternoon|night))[\s!?.]*$/i.test(q.trim());
+
+// ── PATH 2: Exact product name in query — zero tokens ─────────────────────
+// Sorted longest-title-first so "Mango Plant" matches before "Mango"
+const findMentionedProduct = (query, products) => {
+    const q      = query.toLowerCase();
+    const sorted = [...products].sort((a, b) => b.title.length - a.title.length);
+
+    for (const p of sorted) {
+        const t        = p.title.toLowerCase();
+        const variants = new Set([t, t + 's', t + 'es']);
+        if (t.endsWith('es')) variants.add(t.slice(0, -2));
+        if (t.endsWith('s'))  variants.add(t.slice(0, -1));
+
+        for (const v of variants) {
+            if (new RegExp(`\\b${v}\\b`, 'i').test(q)) return p;
         }
     }
     return null;
 };
 
-// ── Step 2: Detect broad inventory queries ─────────────────────────────────
-const isBroadQuery = (query) => {
-    const broadPatterns = [
-        /what.*(have|got|stock|sell|available)/i,
-        /show.*(all|everything|products|items)/i,
-        /list.*(all|products|items)/i,
-        /all (products|items|stock)/i,
-        /what('s| is).*(in stock|available)/i,
-        /do you have everything/i,
-        /full (menu|list|inventory)/i,
-    ];
-    return broadPatterns.some(p => p.test(query.trim()));
-};
-
-// ── Step 3: Build the response — no Gemini, pure JS ───────────────────────
-const buildResponse = (query, matchedProducts, specificProduct = null) => {
+// ── PATH 2 response — pure JS, no LLM ────────────────────────────────────
+const directAnswer = (query, product) => {
     const q = query.toLowerCase();
-    const isPriceQuery = /price|cost|kitna|rate|how much|₹|rupee/i.test(q);
-
-    // ── Specific product was identified in query ───────────────────────────
-    if (specificProduct) {
-        const outOfStock = (specificProduct.stock ?? 0) === 0;
-        if (outOfStock) {
-            return {
-                thought: `Sorry ji, ${specificProduct.title} is currently out of stock. 😔`,
-                recommended_product_names: []
-            };
-        }
-        if (isPriceQuery) {
-            return {
-                thought: `${specificProduct.title} is priced at ₹${specificProduct.price}.`,
-                recommended_product_names: [specificProduct.title]
-            };
-        }
+    if ((product.stock ?? 0) === 0) {
         return {
-            thought: `Yes! We have fresh ${specificProduct.title} in stock for ₹${specificProduct.price}. 🌿`,
-            recommended_product_names: [specificProduct.title]
+            responseMessage: `Sorry ji, ${product.title} is currently out of stock. 😔`,
+            productsToDisplay: []
         };
     }
-
-    // ── No specific product — work with matched list ───────────────────────
-    const inStock = matchedProducts.filter(p => (p.stock ?? 0) > 0);
-
-    if (inStock.length === 0) {
+    if (/price|cost|kitna|rate|how much|₹|rupee/i.test(q)) {
         return {
-            thought: "Sorry ji, nothing matching that is available right now. Please check back soon!",
-            recommended_product_names: []
+            responseMessage: `${product.title} is priced at ₹${product.price}.`,
+            productsToDisplay: [product]
         };
     }
-
-    const names = inStock.map(p => p.title).join(", ");
-
-    // Broad / category queries
-    if (isBroadQuery(query)) {
-        return {
-            thought: `Here's what we have in stock: ${names}. What would you like to order? 🛒`,
-            recommended_product_names: inStock.map(p => p.title)
-        };
-    }
-    if (/fruit/i.test(q))                      return { thought: `Here are our fruits: ${names}. 🍎`, recommended_product_names: inStock.map(p => p.title) };
-    if (/vegetable|veggie|sabzi/i.test(q))     return { thought: `Here are our vegetables: ${names}. 🥦`, recommended_product_names: inStock.map(p => p.title) };
-    if (/plant/i.test(q))                      return { thought: `Here are our plants: ${names}. 🌱`, recommended_product_names: inStock.map(p => p.title) };
-    if (/seed/i.test(q))                       return { thought: `Here are our seeds: ${names}. 🌾`, recommended_product_names: inStock.map(p => p.title) };
-    if (/milk|dairy|ghee|paneer/i.test(q))     return { thought: `Here are our dairy products: ${names}. 🥛`, recommended_product_names: inStock.map(p => p.title) };
-
-    // Semantic match result — show what vector search found
     return {
-        thought: `Here's what I found for you: ${names}. 🌿`,
-        recommended_product_names: inStock.map(p => p.title)
+        responseMessage: `Yes! We have fresh ${product.title} in stock for ₹${product.price}. 🌿`,
+        productsToDisplay: [product]
     };
 };
 
-// ── Main route ─────────────────────────────────────────────────────────────
+// ── PATH 3: Broad inventory query — zero tokens ───────────────────────────
+const isBroadInventoryQuery = (q) => [
+    /what.*(have|got|stock|sell|available)/i,
+    /show.*(all|everything|products|items)/i,
+    /list.*(all|products|items)/i,
+    /^all (products|items|stock)/i,
+    /what('s| is).*(in stock|available)/i,
+    /full (menu|list|inventory)/i,
+].some(p => p.test(q.trim()));
+
+// ── Main route ────────────────────────────────────────────────────────────
 router.post('/chat', async (req, res) => {
     try {
         const { query } = req.body;
-        if (!query) return res.status(400).json({ success: false, error: "Query required" });
+        if (!query?.trim())
+            return res.status(400).json({ success: false, error: "Query required" });
 
-        // ── Greeting — instant, no DB needed ──────────────────────────────
-        const isGreeting = /^(hi|hello|namaste|hey|good\s*(morning|evening|afternoon))[\s!?.]*$/i.test(query.trim());
-        if (isGreeting) {
+        // ── PATH 1: Greeting ──────────────────────────────────────────────
+        if (isGreeting(query)) {
             return res.json({
                 success: true,
                 responseMessage: "Namaste! 🙏 Welcome to GaonWala. What would you like to buy today?",
@@ -141,9 +98,10 @@ router.post('/chat', async (req, res) => {
             });
         }
 
-        // ── Fetch all product titles cheaply (no embeddings, no Gemini) ───
-        // Used for name-matching — tiny payload, just title + stock + price
-        const allProducts = await Product.find({}).select('title price stock image category').lean();
+        // ── Fetch all products (no embeddings — lightweight) ──────────────
+        const allProducts = await Product.find({})
+            .select('title price stock image category')
+            .lean();
 
         if (allProducts.length === 0) {
             return res.json({
@@ -153,77 +111,71 @@ router.post('/chat', async (req, res) => {
             });
         }
 
-        // ── PRIORITY 1: Does query mention a specific product by name? ─────
-        // e.g. "do you have mangoes?" → finds Mango → direct answer, no vector search
-        const specificProduct = findMentionedProduct(query, allProducts);
+        // ── PATH 2: Query contains exact product name ─────────────────────
+        // "do you have mango?", "price of ghee?", "is onion in stock?"
+        const hit = findMentionedProduct(query, allProducts);
+        if (hit) {
+            console.log(`✅ PATH 2 — direct match: "${hit.title}"`);
+            return res.json({ success: true, ...directAnswer(query, hit) });
+        }
 
-        if (specificProduct) {
-            console.log(`✅ Direct name match: "${specificProduct.title}"`);
-            const aiData = buildResponse(query, [], specificProduct);
-            const cards = aiData.recommended_product_names.length > 0
-                ? [specificProduct]
-                : [];
+        // ── PATH 3: Broad inventory query ─────────────────────────────────
+        if (isBroadInventoryQuery(query)) {
+            console.log(`📋 PATH 3 — broad query`);
+            const inStock = allProducts.filter(p => (p.stock ?? 0) > 0);
             return res.json({
                 success: true,
-                responseMessage: aiData.thought,
-                productsToDisplay: cards
+                responseMessage: `Here's what we have in stock: ${inStock.map(p => p.title).join(", ")}. 🛒`,
+                productsToDisplay: inStock
             });
         }
 
-        // ── PRIORITY 2: Broad query → fetch all, skip vector search ───────
-        if (isBroadQuery(query)) {
-            console.log(`📋 Broad query — returning all products`);
-            const aiData = buildResponse(query, allProducts);
-            const cards = allProducts.filter(p =>
-                aiData.recommended_product_names.includes(p.title)
-            );
-            return res.json({
-                success: true,
-                responseMessage: aiData.thought,
-                productsToDisplay: cards
-            });
-        }
+        // ── PATH 4: All other queries → Gemini with FULL inventory ────────
+        //
+        // This is the intelligence layer. Gemini uses its real food knowledge to:
+        //   "do you have orange?"      → sees no orange in list → "sorry, we don't have it"
+        //   "something spicy?"         → knows onion/ginger are spicy, not aloe vera
+        //   "something tangy?"         → knows tamarind/lemon are tangy
+        //   "list what you don't have" → handles trick/nonsense queries
+        //   "gift under ₹200"          → filters by price intelligently
+        //
+        // Sending all ~20 products is tiny context — no vector search needed at this scale.
+        // Vector search LOST the reasoning because embeddings don't encode taste/flavour.
+        console.log(`🤖 PATH 4 — Gemini: "${query}"`);
 
-        // ── PRIORITY 3: Semantic query → vector search ─────────────────────
-        // Only reaches here for queries like "something sweet", "gift for farmer"
-        console.log(`🔍 Semantic query — vector search`);
-        let matchedProducts = [];
+        const prompt = generateSalesPrompt(query, allProducts);
+        let rawText;
 
         try {
-            const queryVector   = await embedWithRetry(query);
-            const totalProducts = allProducts.length;
-            const limit         = Math.min(10, totalProducts);
-            const numCandidates = Math.max(totalProducts, limit + 10);
-
-            matchedProducts = await Product.aggregate([
-                {
-                    $vectorSearch: {
-                        index:        "vector_index",
-                        path:         "embedding",
-                        queryVector,
-                        numCandidates,
-                        limit,
-                    }
-                },
-                { $project: { embedding: 0, __v: 0 } }
-            ]);
+            rawText = await askGemini(prompt);
         } catch (err) {
-            console.warn("⚠️  Vector search failed, falling back to full fetch:", err.message);
-            matchedProducts = allProducts;
+            console.error(`❌ Gemini unavailable after retries: ${err.message}`);
+            return res.json({
+                success: true,
+                responseMessage: "⏳ Our AI is a little busy right now. Please try again in a moment!",
+                productsToDisplay: []
+            });
         }
 
-        // If vector search returned nothing, fall back to all products
-        if (matchedProducts.length === 0) {
-            console.warn("⚠️  Vector search returned 0 results — using full product list");
-            matchedProducts = allProducts;
+        // Strip markdown fences Gemini occasionally wraps around JSON
+        const cleaned = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        let aiData;
+        try {
+            aiData = JSON.parse(cleaned);
+        } catch {
+            console.error("JSON parse failed. Raw output:", cleaned);
+            return res.json({
+                success: true,
+                responseMessage: cleaned.slice(0, 250),
+                productsToDisplay: []
+            });
         }
 
-        const aiData = buildResponse(query, matchedProducts);
-        const finalCards = matchedProducts.filter(p =>
-            aiData.recommended_product_names.includes(p.title)
-        );
+        const recommended = aiData.recommended_product_names || [];
+        const finalCards  = allProducts.filter(p => recommended.includes(p.title));
 
-        res.json({
+        return res.json({
             success: true,
             responseMessage: aiData.thought,
             productsToDisplay: finalCards
