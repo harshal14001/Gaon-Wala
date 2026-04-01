@@ -1,4 +1,3 @@
-## NOTE - Project is still under development and updated with great feature, which are not yet added to Readme
 ## 🚀 GaonWala - AI-Powered E-Commerce Platform
 ####  About Me
 Hi, I’m **Harshal Argade** 👋  
