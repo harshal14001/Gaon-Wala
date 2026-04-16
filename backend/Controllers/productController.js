@@ -5,7 +5,7 @@ if (!process.env.GEMINI_API_KEY) {
   console.error("⚠️  GEMINI_API_KEY not configured - embedding features will fail");
 }
 
-// ── Embedding helper ───────────────────────────────────────────────────────
+// ── Embedding helper
 // gemini-embedding-001 outputs 3072-dimensional vectors
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
@@ -61,7 +61,7 @@ export const addProduct = async (req, res) => {
       stock: numStock,
     });
 
-    // ✅ Auto-embed after creation so it's immediately searchable via vector search
+    // Auto-embed after creation so it's immediately searchable via vector search
     // Non-blocking — product is created even if embedding fails
     try {
       const embedding = await generateEmbedding(newProduct);

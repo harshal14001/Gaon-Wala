@@ -122,7 +122,7 @@ const App = () => {
         setCart={setCart}
       />
 
-      {/* ✅ cart + onUpdateQty now passed so widget knows what's in the cart */}
+      {/*  cart + onUpdateQty now passed so widget knows what's in the cart */}
       <AIChatWidget
         cart={cart}
         onAddToCart={handleAddToCart}
