@@ -14,6 +14,7 @@ import AdminDashboard from "./Components/AdminDashboard.jsx";
 
 const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);          // NEW: guest admin flag
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [cart, setCart] = useState([]);
@@ -21,52 +22,98 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [tokenLoaded, setTokenLoaded] = useState(false);
 
+  // ── On mount: restore session from localStorage ──────────────────────────
   useEffect(() => {
     const validateToken = async () => {
       const token = localStorage.getItem("adminToken");
-      if (!token) {
-        setTokenLoaded(true);
-        return;
-      }
-      
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        await axios.get(`${API_URL}/api/products`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        setIsAdmin(true);
-      } catch (err) {
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          localStorage.removeItem("adminToken");
-          setIsAdmin(false);
+      const guestToken = localStorage.getItem("guestAdminToken");
+
+      // 1. Check for a valid real-admin token
+      if (token) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          await axios.get(`${API_URL}/api/products`, {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          setIsAdmin(true);
+          setTokenLoaded(true);
+          return;
+        } catch (err) {
+          if (err.response?.status === 401 || err.response?.status === 403) {
+            localStorage.removeItem("adminToken");
+          }
         }
-      } finally {
-        setTokenLoaded(true);
       }
+
+      // 2. Check for a live guest token (verify it hasn't expired)
+      if (guestToken) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          await axios.get(`${API_URL}/api/products`, {
+            headers: { Authorization: `Bearer ${guestToken}` },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          setIsGuest(true);
+          setTokenLoaded(true);
+          return;
+        } catch (err) {
+          // Expired or invalid — clear it silently
+          localStorage.removeItem("guestAdminToken");
+          localStorage.removeItem("guestTokenExpiry");
+        }
+      }
+
+      setTokenLoaded(true);
     };
-    
+
     validateToken();
   }, []);
 
+  // ── Real admin login ──────────────────────────────────────────────────────
   const handleAdminLogin = (token) => {
     if (token && typeof token === "string") {
       localStorage.setItem("adminToken", token);
       setIsAdmin(true);
+      setIsGuest(false);
       setShowAdminModal(false);
     } else {
       alert("Login failed.");
     }
   };
 
+  // ── Guest admin login (NEW) ───────────────────────────────────────────────
+  const handleGuestLogin = useCallback((token, expiresIn) => {
+    if (token && typeof token === "string") {
+      localStorage.setItem("guestAdminToken", token);
+      // Store exact expiry timestamp so the dashboard countdown is accurate
+      localStorage.setItem("guestTokenExpiry", String(Date.now() + expiresIn * 1000));
+      setIsGuest(true);
+      setIsAdmin(false);
+      setShowAdminModal(false);
+    } else {
+      alert("Guest login failed.");
+    }
+  }, []);
+
+  // ── Real admin logout ─────────────────────────────────────────────────────
   const handleLogout = useCallback(() => {
     localStorage.removeItem("adminToken");
     setIsAdmin(false);
   }, []);
 
+  // ── Guest logout (NEW) ────────────────────────────────────────────────────
+  const handleGuestLogout = useCallback(() => {
+    localStorage.removeItem("guestAdminToken");
+    localStorage.removeItem("guestTokenExpiry");
+    setIsGuest(false);
+  }, []);
+
+  // ── Cart helpers (unchanged) ──────────────────────────────────────────────
   const handleAddToCart = (product) => {
     const exist = cart.find((x) => x._id === product._id);
     if (exist) {
@@ -99,13 +146,27 @@ const App = () => {
 
   const handleOrderPlaced = () => setCart([]);
 
-  return !tokenLoaded ? (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <p>Loading...</p>
-    </div>
-  ) : isAdmin ? (
-    <AdminDashboard onLogout={handleLogout} />
-  ) : (
+  // ── Render ────────────────────────────────────────────────────────────────
+  if (!tokenLoaded) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Real admin view
+  if (isAdmin) {
+    return <AdminDashboard onLogout={handleLogout} isGuest={false} />;
+  }
+
+  // Guest admin view
+  if (isGuest) {
+    return <AdminDashboard onLogout={handleGuestLogout} isGuest={true} />;
+  }
+
+  // Public / shopper view
+  return (
     <>
       <Scroll />
       <Banner
@@ -122,7 +183,6 @@ const App = () => {
         setCart={setCart}
       />
 
-      {/*  cart + onUpdateQty now passed so widget knows what's in the cart */}
       <AIChatWidget
         cart={cart}
         onAddToCart={handleAddToCart}
@@ -142,6 +202,7 @@ const App = () => {
       {showAdminModal && (
         <AdminLogin
           onLoginSuccess={handleAdminLogin}
+          onGuestSuccess={handleGuestLogin}
           onClose={() => setShowAdminModal(false)}
         />
       )}

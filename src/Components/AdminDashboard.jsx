@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { API_URL } from "../config.js";
 import "./AdminDashboard.css";
@@ -6,7 +6,50 @@ import "./AdminDashboard.css";
 const STATUS_OPTIONS = ["Pending", "Confirmed", "Delivered", "Cancelled"];
 const CATEGORIES = ["Vegetable", "Fruit", "Milk Products", "Plants", "Seeds", "Other"];
 
-const AdminDashboard = ({ onLogout }) => {
+// ── Helper: format seconds as mm:ss ──────────────────────────────────────────
+const formatCountdown = (seconds) => {
+  if (seconds <= 0) return "00:00";
+  const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+  const s = (seconds % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+};
+
+// ── Sandbox Countdown Banner (guest only) ─────────────────────────────────────
+const SandboxBanner = ({ onExpire }) => {
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    const expiry = Number(localStorage.getItem("guestTokenExpiry") || "0");
+    return Math.max(0, Math.floor((expiry - Date.now()) / 1000));
+  });
+
+  useEffect(() => {
+    if (secondsLeft <= 0) { onExpire(); return; }
+    const id = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) { clearInterval(id); onExpire(); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const urgent = secondsLeft < 5 * 60; // last 5 min → red
+
+  return (
+    <div className={`sandbox-banner ${urgent ? "sandbox-banner-urgent" : ""}`}>
+      <span className="sandbox-icon">🧪</span>
+      <div className="sandbox-text">
+        <strong>Sandbox Mode</strong>
+        <span>You're exploring as a Guest Admin. Changes are isolated to this session and won't affect the real database.</span>
+      </div>
+      <div className={`sandbox-timer ${urgent ? "sandbox-timer-urgent" : ""}`}>
+        ⏱ {formatCountdown(secondsLeft)}
+      </div>
+    </div>
+  );
+};
+
+// ── Main Dashboard ────────────────────────────────────────────────────────────
+const AdminDashboard = ({ onLogout, isGuest }) => {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({ title: "", price: "", image: "", category: "", stock: "50" });
   const [loading, setLoading] = useState(false);
@@ -17,8 +60,12 @@ const AdminDashboard = ({ onLogout }) => {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState("");
 
-  const token = localStorage.getItem("adminToken");
+  // Pick the right token depending on role
+  const token = isGuest
+    ? localStorage.getItem("guestAdminToken")
+    : localStorage.getItem("adminToken");
 
+  // ── Fetch products on mount ───────────────────────────────────────────────
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -34,8 +81,9 @@ const AdminDashboard = ({ onLogout }) => {
     fetchProducts();
   }, [onLogout, token]);
 
+  // ── Fetch orders (real admin only) ────────────────────────────────────────
   useEffect(() => {
-    if (view !== "orders") return;
+    if (view !== "orders" || isGuest) return;
     const fetchOrders = async () => {
       setOrdersLoading(true);
       setOrdersError("");
@@ -51,7 +99,7 @@ const AdminDashboard = ({ onLogout }) => {
       }
     };
     fetchOrders();
-  }, [view, token]);
+  }, [view, token, isGuest]);
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
@@ -82,6 +130,7 @@ const AdminDashboard = ({ onLogout }) => {
     );
   };
 
+  // ── Add product ───────────────────────────────────────────────────────────
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!form.title || !form.price || !form.category || isNaN(form.price))
@@ -103,6 +152,7 @@ const AdminDashboard = ({ onLogout }) => {
     }
   };
 
+  // ── Edit / update ─────────────────────────────────────────────────────────
   const handleEdit = (product) => {
     setProducts((prev) =>
       prev.map((p) =>
@@ -148,6 +198,7 @@ const AdminDashboard = ({ onLogout }) => {
     setProducts((prev) => prev.map((p) => (p._id === id ? { ...p, isEditing: false } : p)));
   };
 
+  // ── Delete ────────────────────────────────────────────────────────────────
   const handleDelete = async (id) => {
     if (!window.confirm("Confirm delete?")) return;
     try {
@@ -160,7 +211,10 @@ const AdminDashboard = ({ onLogout }) => {
     }
   };
 
-  const statusClass = (s) => ({ Pending: "status-pending", Confirmed: "status-confirmed", Delivered: "status-delivered", Cancelled: "status-cancelled" }[s] || "");
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  const statusClass = (s) => (
+    { Pending: "status-pending", Confirmed: "status-confirmed", Delivered: "status-delivered", Cancelled: "status-cancelled" }[s] || ""
+  );
 
   const stockLabel = (stock) => {
     if (stock === 0)  return <span className="stock-tag stock-out">Out of Stock</span>;
@@ -169,29 +223,43 @@ const AdminDashboard = ({ onLogout }) => {
   };
 
   const categorySelect = (name, value, onChange, style = {}) => (
-    <select name={name} value={value} onChange={onChange} required className="category-select" style={{ padding: "8px", borderRadius: "5px", border: "1px solid #ccc", ...style }}>
+    <select name={name} value={value} onChange={onChange} required className="category-select"
+      style={{ padding: "8px", borderRadius: "5px", border: "1px solid #ccc", ...style }}>
       <option value="">Select Category</option>
       {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
     </select>
   );
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="admin-dashboard-container">
+
+      {/* Sandbox banner — guest only */}
+      {isGuest && <SandboxBanner onExpire={onLogout} />}
+
       <div className="admin-header">
-        <h2>Admin Dashboard</h2>
+        <div className="admin-header-title">
+          <h2>{isGuest ? "Guest Admin Dashboard" : "Admin Dashboard"}</h2>
+          {isGuest && <span className="guest-role-badge">🎭 Sandbox</span>}
+        </div>
         <div className="admin-header-actions">
-          <button
-            className={`view-orders-btn ${view === "orders" ? "active" : ""}`}
-            onClick={() => setView(view === "orders" ? "products" : "orders")}
-          >
-            {view === "orders" ? "← Products" : "View Orders 📦"}
+          {/* Orders button hidden for guest — they have no real orders */}
+          {!isGuest && (
+            <button
+              className={`view-orders-btn ${view === "orders" ? "active" : ""}`}
+              onClick={() => setView(view === "orders" ? "products" : "orders")}
+            >
+              {view === "orders" ? "← Products" : "View Orders 📦"}
+            </button>
+          )}
+          <button onClick={onLogout} className="logout-btn">
+            {isGuest ? "Exit Sandbox" : "Logout"}
           </button>
-          <button onClick={onLogout} className="logout-btn">Logout</button>
         </div>
       </div>
 
-      {/* ── ORDERS PANEL ── */}
-      {view === "orders" && (
+      {/* ── ORDERS PANEL (real admin only) ── */}
+      {view === "orders" && !isGuest && (
         <div className="orders-panel">
           <h3>All Orders</h3>
           {ordersLoading && <p className="orders-loading">Loading orders...</p>}
@@ -199,7 +267,6 @@ const AdminDashboard = ({ onLogout }) => {
           {!ordersLoading && !ordersError && orders.length === 0 && (
             <p className="no-orders">No orders yet.</p>
           )}
-
           {orders.map((order) => (
             <div key={order._id} className="order-card">
               <div className="order-card-header">
@@ -219,7 +286,6 @@ const AdminDashboard = ({ onLogout }) => {
                   </select>
                 </div>
               </div>
-
               {order.customer && (
                 <div className="customer-info-block">
                   <div className="customer-info-row">
@@ -236,7 +302,6 @@ const AdminDashboard = ({ onLogout }) => {
                   </div>
                 </div>
               )}
-
               <div className="order-items">
                 {order.items.map((item, idx) => (
                   <div key={idx} className="order-item-row">
@@ -247,7 +312,6 @@ const AdminDashboard = ({ onLogout }) => {
                   </div>
                 ))}
               </div>
-
               <div className="order-total">Total: <strong>₹{order.total.toFixed(2)}</strong></div>
             </div>
           ))}
@@ -257,7 +321,13 @@ const AdminDashboard = ({ onLogout }) => {
       {/* ── PRODUCTS PANEL ── */}
       {view === "products" && (
         <>
+          {/* Add product form — same for both guest and admin */}
           <form className="product-form" onSubmit={handleAdd}>
+            {isGuest && (
+              <p className="sandbox-form-note">
+                ✏️ Products added here exist only in your sandbox session. Check your newly added product at the end of list.
+              </p>
+            )}
             <input name="title" placeholder="Title" value={form.title} onChange={handleFormChange} required />
             <input name="price" type="number" placeholder="Price ₹" value={form.price} onChange={handleFormChange} required />
             <input name="image" type="text" placeholder="Paste Cloudinary image URL" value={form.image} onChange={handleFormChange} />
@@ -268,14 +338,19 @@ const AdminDashboard = ({ onLogout }) => {
           </form>
 
           <div className="product-list">
-            <h3>All Products</h3>
+            <h3>All Products {isGuest && <span className="sandbox-list-note">(Sandbox copy)</span>}</h3>
             {products.map((product) => (
-              <div key={product._id} className="product-item">
+              <div key={product._id} className={`product-item ${product.isGuestAdded ? "product-item-guest" : ""}`}>
                 {!product.isEditing ? (
                   <>
-                    <img src={product.image} alt={product.title} />
+                    <img src={product.image || "https://placehold.co/70x70?text=No+Img"} alt={product.title} />
                     <div className="product-details">
-                      <h4>{product.title}</h4>
+                      <h4>
+                        {product.title}
+                        {product.isGuestAdded && (
+                          <span className="guest-added-badge">✨ Added by you</span>
+                        )}
+                      </h4>
                       <p>₹{product.price} &nbsp;·&nbsp; {product.category}</p>
                       {stockLabel(product.stock ?? 0)}
                     </div>

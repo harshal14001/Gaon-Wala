@@ -6,7 +6,11 @@ import Product from '../Models/Products.js';
 const router = express.Router();
 
 const genAI     = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const chatModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const chatModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash",
+    generationConfig: {
+    responseMimeType: "application/json", // This forces native JSON generation, for better prompt retrival
+  }
+});
 
 // ── Gemini call with exponential backoff on 503 / 429 ─────────────────────
 const askGemini = async (prompt, retries = 3, delayMs = 1500) => {
