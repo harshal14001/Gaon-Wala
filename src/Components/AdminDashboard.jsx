@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_URL } from "../config.js";
 import "./AdminDashboard.css";
 
 const STATUS_OPTIONS = ["Pending", "Confirmed", "Delivered", "Cancelled"];
-const CATEGORIES = ["Vegetable", "Fruit", "Milk Products", "Plants", "Seeds", "Other"];
+const KNOWN_CATEGORIES = ["Vegetable", "Fruit", "Milk Products", "Plants", "Seeds"];
 
 // ── Helper: format seconds as mm:ss ──────────────────────────────────────────
 const formatCountdown = (seconds) => {
@@ -14,7 +14,7 @@ const formatCountdown = (seconds) => {
   return `${m}:${s}`;
 };
 
-// ── Sandbox Countdown Banner (guest only) ─────────────────────────────────────
+// ── Sandbox Countdown Banner ──────────────────────────────────────────────────
 const SandboxBanner = ({ onExpire }) => {
   const [secondsLeft, setSecondsLeft] = useState(() => {
     const expiry = Number(localStorage.getItem("guestTokenExpiry") || "0");
@@ -32,8 +32,7 @@ const SandboxBanner = ({ onExpire }) => {
     return () => clearInterval(id);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const urgent = secondsLeft < 5 * 60; // last 5 min → red
-
+  const urgent = secondsLeft < 5 * 60;
   return (
     <div className={`sandbox-banner ${urgent ? "sandbox-banner-urgent" : ""}`}>
       <span className="sandbox-icon">🧪</span>
@@ -48,24 +47,84 @@ const SandboxBanner = ({ onExpire }) => {
   );
 };
 
+// ── CategoryField ─────────────────────────────────────────────────────────────
+// ROOT CAUSE OF BUG: previous version derived `showInput` purely from `value` prop.
+// When "Other" was selected → onChange("") fired → value became "" →
+// selectValue became "" → input condition was false → input vanished instantly.
+//
+// FIX: local `showCustom` state is set by the user's dropdown choice and persists
+// independently of the value prop. It does NOT flip back to false when value="".
+const CategoryField = ({ value, onChange, style = {} }) => {
+  // On first render: if the incoming value is already a custom category, show input
+  const [showCustom, setShowCustom] = useState(
+    () => value !== "" && !KNOWN_CATEGORIES.includes(value)
+  );
+
+  const handleSelect = (e) => {
+    const chosen = e.target.value;
+    if (chosen === "Other") {
+      setShowCustom(true);   // show the text input — stays visible even when value=""
+      onChange("");           // clear so user types a fresh name
+    } else {
+      setShowCustom(false);
+      onChange(chosen);
+    }
+  };
+
+  // What the <select> shows:
+  //  - known category  → that value
+  //  - custom mode     → "Other" (keeps dropdown in sync)
+  //  - nothing chosen  → ""
+  const selectValue = showCustom
+    ? "Other"
+    : (KNOWN_CATEGORIES.includes(value) ? value : "");
+
+  return (
+    <div className="category-field-wrap" style={style}>
+      <select
+        value={selectValue}
+        onChange={handleSelect}
+        required={!showCustom}   // text input carries `required` when visible
+        className="category-select"
+      >
+        <option value="">Select Category</option>
+        {KNOWN_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        <option value="Other">Other (specify below)</option>
+      </select>
+
+      {showCustom && (
+        <input
+          type="text"
+          className="category-custom-input"
+          placeholder="e.g. Seasonal, Herbal, Exotic…"
+          value={value}                              // controlled: shows what admin typed
+          onChange={(e) => onChange(e.target.value)}
+          required
+          autoFocus
+        />
+      )}
+    </div>
+  );
+};
+
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 const AdminDashboard = ({ onLogout, isGuest }) => {
-  const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ title: "", price: "", image: "", category: "", stock: "50" });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [products, setProducts]           = useState([]);
+  const [form, setForm]                   = useState({ title: "", price: "", image: "", category: "", stock: "50" });
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState("");
+  const [productSearch, setProductSearch] = useState("");
 
-  const [view, setView] = useState("products");
-  const [orders, setOrders] = useState([]);
+  const [view, setView]                   = useState("products");
+  const [orders, setOrders]               = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
-  const [ordersError, setOrdersError] = useState("");
+  const [ordersError, setOrdersError]     = useState("");
 
-  // Pick the right token depending on role
   const token = isGuest
     ? localStorage.getItem("guestAdminToken")
     : localStorage.getItem("adminToken");
 
-  // ── Fetch products on mount ───────────────────────────────────────────────
+  // ── Fetch products ────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -130,15 +189,28 @@ const AdminDashboard = ({ onLogout, isGuest }) => {
     );
   };
 
+  const handleInlineCategory = (id, categoryValue) => {
+    setProducts((prev) =>
+      prev.map((p) =>
+        p._id === id ? { ...p, editForm: { ...p.editForm, category: categoryValue } } : p
+      )
+    );
+  };
+
   // ── Add product ───────────────────────────────────────────────────────────
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.price || !form.category || isNaN(form.price))
-      return alert("Fill valid inputs");
+    const finalCategory = form.category.trim();
+    if (!form.title || !form.price || !finalCategory || isNaN(form.price))
+      return alert("Fill all valid inputs including a category name.");
     setLoading(true);
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([k, v]) => v !== "" && formData.append(k, v));
+      formData.append("title",    form.title);
+      formData.append("price",    form.price);
+      formData.append("category", finalCategory); // actual name, never "Other"
+      formData.append("stock",    form.stock);
+      if (form.image) formData.append("image", form.image);
       const res = await axios.post(`${API_URL}/api/products`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -173,13 +245,15 @@ const AdminDashboard = ({ onLogout, isGuest }) => {
   const handleUpdate = async (e, product) => {
     e.preventDefault();
     const data = product.editForm;
+    const finalCategory = (data.category || "").trim();
+    if (!finalCategory) return alert("Please specify a category.");
     setLoading(true);
     try {
       const payload = new FormData();
-      payload.append("title", data.title);
-      payload.append("price", data.price);
-      payload.append("category", data.category);
-      payload.append("stock", data.stock);
+      payload.append("title",    data.title);
+      payload.append("price",    data.price);
+      payload.append("category", finalCategory);
+      payload.append("stock",    data.stock);
       if (data.image) payload.append("image", data.image);
       const res = await axios.put(`${API_URL}/api/products/${product._id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -222,19 +296,15 @@ const AdminDashboard = ({ onLogout, isGuest }) => {
     return <span className="stock-tag stock-ok">{stock} in stock</span>;
   };
 
-  const categorySelect = (name, value, onChange, style = {}) => (
-    <select name={name} value={value} onChange={onChange} required className="category-select"
-      style={{ padding: "8px", borderRadius: "5px", border: "1px solid #ccc", ...style }}>
-      <option value="">Select Category</option>
-      {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-    </select>
-  );
+  const filteredProducts = products.filter((p) => {
+    const q = productSearch.toLowerCase();
+    return p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+  });
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="admin-dashboard-container">
 
-      {/* Sandbox banner — guest only */}
       {isGuest && <SandboxBanner onExpire={onLogout} />}
 
       <div className="admin-header">
@@ -243,7 +313,6 @@ const AdminDashboard = ({ onLogout, isGuest }) => {
           {isGuest && <span className="guest-role-badge">🎭 Sandbox</span>}
         </div>
         <div className="admin-header-actions">
-          {/* Orders button hidden for guest — they have no real orders */}
           {!isGuest && (
             <button
               className={`view-orders-btn ${view === "orders" ? "active" : ""}`}
@@ -258,7 +327,7 @@ const AdminDashboard = ({ onLogout, isGuest }) => {
         </div>
       </div>
 
-      {/* ── ORDERS PANEL (real admin only) ── */}
+      {/* ── ORDERS PANEL ── */}
       {view === "orders" && !isGuest && (
         <div className="orders-panel">
           <h3>All Orders</h3>
@@ -288,18 +357,9 @@ const AdminDashboard = ({ onLogout, isGuest }) => {
               </div>
               {order.customer && (
                 <div className="customer-info-block">
-                  <div className="customer-info-row">
-                    <span className="customer-info-icon">👤</span>
-                    <span className="customer-info-value">{order.customer.name}</span>
-                  </div>
-                  <div className="customer-info-row">
-                    <span className="customer-info-icon">📞</span>
-                    <a href={`tel:${order.customer.phone}`} className="customer-phone">{order.customer.phone}</a>
-                  </div>
-                  <div className="customer-info-row">
-                    <span className="customer-info-icon">📍</span>
-                    <span className="customer-info-value">{order.customer.address}</span>
-                  </div>
+                  <div className="customer-info-row"><span className="customer-info-icon">👤</span><span className="customer-info-value">{order.customer.name}</span></div>
+                  <div className="customer-info-row"><span className="customer-info-icon">📞</span><a href={`tel:${order.customer.phone}`} className="customer-phone">{order.customer.phone}</a></div>
+                  <div className="customer-info-row"><span className="customer-info-icon">📍</span><span className="customer-info-value">{order.customer.address}</span></div>
                 </div>
               )}
               <div className="order-items">
@@ -321,25 +381,56 @@ const AdminDashboard = ({ onLogout, isGuest }) => {
       {/* ── PRODUCTS PANEL ── */}
       {view === "products" && (
         <>
-          {/* Add product form — same for both guest and admin */}
           <form className="product-form" onSubmit={handleAdd}>
             {isGuest && (
               <p className="sandbox-form-note">
-                ✏️ Products added here exist only in your sandbox session. Check your newly added product at the end of list.
+                ✏️ Products added here exist only in your sandbox session.
               </p>
             )}
             <input name="title" placeholder="Title" value={form.title} onChange={handleFormChange} required />
             <input name="price" type="number" placeholder="Price ₹" value={form.price} onChange={handleFormChange} required />
             <input name="image" type="text" placeholder="Paste Cloudinary image URL" value={form.image} onChange={handleFormChange} />
-            {categorySelect("category", form.category, handleFormChange, { margin: "5px 0" })}
+            <CategoryField
+              value={form.category}
+              onChange={(val) => setForm((prev) => ({ ...prev, category: val }))}
+              style={{ marginBottom: "0.8rem" }}
+            />
             <input name="stock" type="number" placeholder="Stock quantity" value={form.stock} onChange={handleFormChange} min="0" required />
             <button type="submit" className="add-btn" disabled={loading}>{loading ? "Adding..." : "Add Product"}</button>
             {error && <p className="form-error">{error}</p>}
           </form>
 
           <div className="product-list">
-            <h3>All Products {isGuest && <span className="sandbox-list-note">(Sandbox copy)</span>}</h3>
-            {products.map((product) => (
+            <div className="product-list-header">
+              <h3>
+                All Products
+                {isGuest && <span className="sandbox-list-note">(Sandbox copy)</span>}
+              </h3>
+              <div className="product-search-wrap">
+                <span className="product-search-icon"></span>
+                <input
+                  type="text"
+                  className="product-search-input"
+                  placeholder="Search by name or category…"
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                />
+                {productSearch && (
+                  <button className="product-search-clear" onClick={() => setProductSearch("")} aria-label="Clear search">✕</button>
+                )}
+              </div>
+            </div>
+
+            {productSearch && (
+              <p className="product-search-count">
+                {filteredProducts.length} result{filteredProducts.length !== 1 ? "s" : ""} for "{productSearch}"
+              </p>
+            )}
+            {filteredProducts.length === 0 && (
+              <p className="product-search-empty">No products match your search.</p>
+            )}
+
+            {filteredProducts.map((product) => (
               <div key={product._id} className={`product-item ${product.isGuestAdded ? "product-item-guest" : ""}`}>
                 {!product.isEditing ? (
                   <>
@@ -347,9 +438,7 @@ const AdminDashboard = ({ onLogout, isGuest }) => {
                     <div className="product-details">
                       <h4>
                         {product.title}
-                        {product.isGuestAdded && (
-                          <span className="guest-added-badge">✨ Added by you</span>
-                        )}
+                        {product.isGuestAdded && <span className="guest-added-badge">✨ Added by you</span>}
                       </h4>
                       <p>₹{product.price} &nbsp;·&nbsp; {product.category}</p>
                       {stockLabel(product.stock ?? 0)}
@@ -364,7 +453,11 @@ const AdminDashboard = ({ onLogout, isGuest }) => {
                     <input name="title" value={product.editForm.title} onChange={(e) => handleInlineChange(product._id, e)} required />
                     <input name="price" type="number" value={product.editForm.price} onChange={(e) => handleInlineChange(product._id, e)} required />
                     <input name="image" type="text" placeholder="Paste Image URL" value={product.editForm.image || ""} onChange={(e) => handleInlineChange(product._id, e)} />
-                    {categorySelect("category", product.editForm.category, (e) => handleInlineChange(product._id, e))}
+                    <CategoryField
+                      value={product.editForm.category}
+                      onChange={(val) => handleInlineCategory(product._id, val)}
+                      style={{ marginBottom: "0.5rem" }}
+                    />
                     <input name="stock" type="number" placeholder="Stock" value={product.editForm.stock ?? 50} onChange={(e) => handleInlineChange(product._id, e)} min="0" required />
                     <div className="edit-buttons">
                       <button type="submit" className="add-btn" disabled={loading}>{loading ? "Saving..." : "Update"}</button>

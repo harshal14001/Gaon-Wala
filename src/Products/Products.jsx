@@ -5,14 +5,11 @@ import "./Products.css";
 
 const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
   const [allProducts, setAllProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  // tracks which product ids are in the "just added" flash state
-  const [flashSet, setFlashSet]   = useState(new Set());
-  // tracks which qty display is animating (bounce)
-  const [bounceSet, setBounceSet] = useState(new Set());
-  // tracks which + button is shaking (at max stock)
-  const [shakeSet, setShakeSet]   = useState(new Set());
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState("");
+  const [flashSet, setFlashSet]       = useState(new Set());
+  const [bounceSet, setBounceSet]     = useState(new Set());
+  const [shakeSet, setShakeSet]       = useState(new Set());
 
   useEffect(() => {
     let isMounted = true;
@@ -50,19 +47,16 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
     return item ? item.qty : 0;
   };
 
-  // Flash helper — add id, remove after 600ms
   const triggerFlash = useCallback((id) => {
     setFlashSet((prev) => new Set(prev).add(id));
     setTimeout(() => setFlashSet((prev) => { const s = new Set(prev); s.delete(id); return s; }), 600);
   }, []);
 
-  // Bounce helper — add id, remove after 350ms
   const triggerBounce = useCallback((id) => {
     setBounceSet((prev) => new Set(prev).add(id));
     setTimeout(() => setBounceSet((prev) => { const s = new Set(prev); s.delete(id); return s; }), 350);
   }, []);
 
-  // Shake helper — add id, remove after 500ms
   const triggerShake = useCallback((id) => {
     setShakeSet((prev) => new Set(prev).add(id));
     setTimeout(() => setShakeSet((prev) => { const s = new Set(prev); s.delete(id); return s; }), 500);
@@ -71,7 +65,6 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
   const handleAdd = (product) => {
     if (product.stock === 0) return;
     triggerFlash(product._id);
-    // small delay so user sees the "✓ Added!" flash before stepper appears
     setTimeout(() => {
       setCart((prev) => [...prev, { ...product, qty: 1 }]);
     }, 300);
@@ -79,17 +72,10 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
 
   const handleIncrement = (product) => {
     const current = getCartQty(product._id);
-    if (current >= product.stock) {
-      triggerShake(product._id);
-      return;
-    }
+    if (current >= product.stock) { triggerShake(product._id); return; }
     triggerBounce(product._id);
     setCart((prev) =>
-      prev.map((item) =>
-        item._id === product._id
-          ? { ...item, qty: item.qty + 1 }
-          : item
-      )
+      prev.map((item) => item._id === product._id ? { ...item, qty: item.qty + 1 } : item)
     );
   };
 
@@ -103,12 +89,24 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
     });
   };
 
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", padding: "3rem", color: "#aaa" }}>
+        Loading products…
+      </div>
+    );
+  }
+
+  if (error) {
+    return <p style={{ textAlign: "center", color: "red", padding: "2rem" }}>{error}</p>;
+  }
+
   return (
     <div className="product-grid">
       {filteredProducts.length === 0 ? (
         <p className="no-products-message">No products found.</p>
       ) : (
-        filteredProducts.map((product) => {
+        filteredProducts.map((product, index) => {
           const cartQty    = getCartQty(product._id);
           const inCart     = cartQty > 0;
           const outOfStock = product.stock === 0;
@@ -119,13 +117,9 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
 
           return (
             <div
-              className={`product-card
-                ${outOfStock ? "out-of-stock-card" : ""}
-                ${inCart     ? "in-cart-card"      : ""}
-              `}
+              className={`product-card ${outOfStock ? "out-of-stock-card" : ""} ${inCart ? "in-cart-card" : ""}`}
               key={product._id}
             >
-              {/* Stock badge */}
               {outOfStock ? (
                 <span className="stock-badge out-of-stock-badge">Out of Stock</span>
               ) : product.stock <= 5 ? (
@@ -136,19 +130,21 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
                 src={product.image || "/placeholder.png"}
                 alt={product.title}
                 className={`product-image ${outOfStock ? "img-greyed" : ""}`}
+                // First 4 cards are above-the-fold (likely LCP candidates) → eager
+                // Everything else → lazy so they don't compete for bandwidth
+                loading={index < 4 ? "eager" : "lazy"}
+                decoding="async"
+                width="200"
+                height="200"
               />
-              <h3 className="product-title">{product.title} </h3>
-              <p className="product-price">₹{product.price}  </p>
+              <h3 className="product-title">{product.title}</h3>
+              <p className="product-price">₹{product.price}</p>
 
-              {/* ── Button zone ── */}
               <div className="cart-buttons">
-
-                {/* OUT OF STOCK */}
                 {outOfStock && (
                   <button className="out-of-stock-btn" disabled>Out of Stock</button>
                 )}
 
-                {/* ADD TO CART (not in cart yet) */}
                 {!outOfStock && !inCart && (
                   <button
                     className={`add-to-cart-btn ${isFlashing ? "btn-flash" : ""}`}
@@ -159,19 +155,10 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
                   </button>
                 )}
 
-                {/* QTY STEPPER (already in cart) */}
                 {!outOfStock && inCart && (
                   <div className="qty-stepper">
-                    <button
-                      className="qty-btn minus-btn"
-                      onClick={() => handleDecrement(product._id)}
-                      aria-label="Decrease quantity"
-                    >−</button>
-
-                    <span className={`qty-display ${isBouncing ? "qty-bounce" : ""}`}>
-                      {cartQty}
-                    </span>
-
+                    <button className="qty-btn minus-btn" onClick={() => handleDecrement(product._id)} aria-label="Decrease quantity">−</button>
+                    <span className={`qty-display ${isBouncing ? "qty-bounce" : ""}`}>{cartQty}</span>
                     <button
                       className={`qty-btn plus-btn ${atMax ? "qty-at-max" : ""} ${isShaking ? "qty-shake" : ""}`}
                       onClick={() => handleIncrement(product)}
@@ -182,7 +169,6 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
                 )}
               </div>
 
-              {/* Subtotal — slides in when in cart */}
               <div className={`subtotal-row ${inCart ? "subtotal-visible" : ""}`}>
                 ₹{(product.price * cartQty).toFixed(2)}
               </div>

@@ -28,6 +28,16 @@
 .logo-container {
   justify-content: center;
   order: 1;
+  /* Reset <a> tag defaults — logo-container is now a <Link> */
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.logo-container:focus-visible {
+  outline: 2px solid #4ec48d;
+  outline-offset: 4px;
+  border-radius: 6px;
 }
 
 .icon-wrapper-group {
@@ -40,6 +50,11 @@
   height: 90px;
   max-width: 100%;
   object-fit: contain;
+  transition: opacity 0.15s ease;
+}
+
+.logo-container:hover .nav-img {
+  opacity: 0.85;
 }
 
 .search-input {
@@ -99,6 +114,7 @@
     justify-content: flex-end;
   }
 }
+
 @media (max-width: 480px) {
   .nav-img {
     height: 60px;
