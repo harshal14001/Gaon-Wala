@@ -8,6 +8,7 @@ const EMPTY_CUSTOMER = { name: "", phone: "", address: "" };
 const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty }) => {
   const [step, setStep] = useState("cart");
   const [customer, setCustomer] = useState(EMPTY_CUSTOMER);
+  const [paymentMethod, setPaymentMethod] = useState(null);
   const [formError, setFormError] = useState("");
   const [ordering, setOrdering] = useState(false);
   const [orderError, setOrderError] = useState("");
@@ -21,13 +22,16 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty
     setFormError("");
   };
 
-  const handlePlaceOrder = async () => {
-    if (!customer.name.trim())    return setFormError("Please enter your name.");
-    if (!customer.phone.trim())   return setFormError("Please enter your phone number.");
+  const validateCustomer = () => {
+    if (!customer.name.trim())    { setFormError("Please enter your name."); return false; }
+    if (!customer.phone.trim())   { setFormError("Please enter your phone number."); return false; }
     if (!/^\d{10}$/.test(customer.phone.trim()))
-                                  return setFormError("Enter a valid 10-digit phone number.");
-    if (!customer.address.trim()) return setFormError("Please enter your delivery address.");
+                                  { setFormError("Enter a valid 10-digit phone number."); return false; }
+    if (!customer.address.trim()) { setFormError("Please enter your delivery address."); return false; }
+    return true;
+  };
 
+  const handleCODOrder = async () => {
     setOrdering(true);
     setOrderError("");
     try {
@@ -55,6 +59,103 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty
     }
   };
 
+  const handleRazorpayPayment = async () => {
+    setOrdering(true);
+    setOrderError("");
+
+    try {
+      const razorpayRes = await axios.post(`${API_URL}/api/razorpay/create-order`, {
+        amount: parseFloat(total.toFixed(2)),
+        customer: {
+          name: customer.name.trim(),
+          phone: customer.phone.trim(),
+        },
+        items: cart.map((item) => ({
+          productId: item._id,
+          title:     item.title,
+          price:     Number(item.price) || 0,
+          image:     item.image || "",
+          qty:       Number(item.qty) || 1,
+        })),
+      });
+
+      const { orderId, key_id } = razorpayRes.data;
+
+      const options = {
+        key: key_id,
+        amount: Math.round(parseFloat(total.toFixed(2)) * 100),
+        currency: "INR",
+        name: "Gaon Wala",
+        description: `Order of ₹${total.toFixed(2)}`,
+        order_id: orderId,
+        prefill: {
+          name: customer.name.trim(),
+          contact: customer.phone.trim(),
+        },
+        handler: async function (response) {
+          try {
+            await axios.post(`${API_URL}/api/razorpay/verify-payment`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              customer: {
+                name:    customer.name.trim(),
+                phone:   customer.phone.trim(),
+                address: customer.address.trim(),
+              },
+              items: cart.map((item) => ({
+                productId: item._id,
+                title:     item.title,
+                price:     Number(item.price) || 0,
+                image:     item.image || "",
+                qty:       Number(item.qty) || 1,
+              })),
+              total: parseFloat(total.toFixed(2)),
+            });
+
+            setStep("success");
+            onOrderPlaced();
+          } catch (err) {
+            setOrderError(err.response?.data?.message || "Payment verification failed. Please contact support.");
+          } finally {
+            setOrdering(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setOrdering(false);
+            setOrderError("Payment cancelled. Please try again.");
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      setOrderError(err.response?.data?.message || "Failed to initiate payment. Try again.");
+      setOrdering(false);
+    }
+  };
+
+  const handleProceedToPayment = () => {
+    if (!validateCustomer()) return;
+    setFormError("");
+    setStep("payment");
+  };
+
+  const handlePaymentSubmit = () => {
+    if (!paymentMethod) {
+      setOrderError("Please select a payment method.");
+      return;
+    }
+
+    if (paymentMethod === "cod") {
+      handleCODOrder();
+    } else if (paymentMethod === "razorpay") {
+      handleRazorpayPayment();
+    }
+  };
+
   return (
     <div className="cart-modal">
       <div className="cart-modal-content">
@@ -76,7 +177,6 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty
                         <h4>{item.title}</h4>
                         <p className="cart-item-unit-price">₹{Number(item.price).toFixed(2)} </p>
 
-                        {/* Qty stepper inside cart */}
                         <div className="cart-qty-stepper">
                           <button
                             className="cart-qty-btn"
@@ -112,7 +212,7 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty
           </>
         )}
 
-        {/* ── STEP 2: Customer details ── */}
+        {/* ── STEP 2: Customer Details ── */}
         {step === "details" && (
           <>
             <h2>Delivery Details 📦</h2>
@@ -136,13 +236,12 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty
                   value={customer.address} onChange={handleCustomerChange} rows={3} />
               </div>
 
-              {formError  && <p className="order-error">{formError}</p>}
-              {orderError && <p className="order-error">{orderError}</p>}
+              {formError && <p className="order-error">{formError}</p>}
 
               <div className="details-actions">
                 <button className="back-btn" onClick={() => setStep("cart")}>← Back</button>
-                <button className="place-order-btn" onClick={handlePlaceOrder} disabled={ordering}>
-                  {ordering ? "Placing..." : "Place Order 🛍️"}
+                <button className="place-order-btn" onClick={handleProceedToPayment}>
+                  Continue to Payment →
                 </button>
               </div>
 
@@ -154,13 +253,89 @@ const CartPopup = ({ cart, onClose, onRemoveFromCart, onOrderPlaced, onUpdateQty
           </>
         )}
 
-        {/* ── STEP 3: Success ── */}
+        {/* ── STEP 3: Payment Method ── */}
+        {step === "payment" && (
+          <>
+            <h3>Choose Payment Method</h3>
+            <p className="details-subtitle">Select how you'd like to pay.</p>
+
+            <div className="payment-methods">
+              {/* Cash on Delivery */}
+              <div
+                className={`payment-option ${paymentMethod === "cod" ? "selected" : ""}`}
+                onClick={() => setPaymentMethod("cod")}
+                role="button"
+                tabIndex="0"
+                onKeyDown={(e) => e.key === 'Enter' && setPaymentMethod("cod")}
+              >
+                <div className="payment-icon">💵</div>
+                <div className="payment-info">
+                  <h3>Cash on Delivery</h3>
+                  <p>Pay when your order arrives</p>
+                </div>
+                <div className={`payment-radio ${paymentMethod === "cod" ? "checked" : ""}`}></div>
+              </div>
+
+              {/* Razorpay */}
+              <div
+                className={`payment-option ${paymentMethod === "razorpay" ? "selected" : ""}`}
+                onClick={() => setPaymentMethod("razorpay")}
+                role="button"
+                tabIndex="0"
+                onKeyDown={(e) => e.key === 'Enter' && setPaymentMethod("razorpay")}
+              >
+                <div className="payment-icon">🔒</div>
+                <div className="payment-info">
+                  <h3>Pay Online (Razorpay)</h3>
+                  <p>Card, UPI, Wallet — secure payment</p>
+                </div>
+                <div className={`payment-radio ${paymentMethod === "razorpay" ? "checked" : ""}`}></div>
+              </div>
+            </div>
+
+            {orderError && <p className="order-error">{orderError}</p>}
+
+            <div className="payment-actions">
+              <button className="back-btn" onClick={() => setStep("details")}>← Back</button>
+              
+              {/* Different button text based on payment method */}
+              {paymentMethod === "cod" ? (
+                <button 
+                  className="place-order-btn cod-btn" 
+                  onClick={handlePaymentSubmit} 
+                  disabled={ordering}
+                >
+                  {ordering ? "Placing Order..." : "Place Order (COD)"}
+                </button>
+              ) : (
+                <button 
+                  className="place-order-btn razorpay-btn" 
+                  onClick={handlePaymentSubmit} 
+                  disabled={ordering || !paymentMethod}
+                >
+                  {ordering ? "Opening Payment..." : `Pay Securely ₹${total.toFixed(2)}`}
+                </button>
+              )}
+            </div>
+
+            <div className="order-summary-mini">
+              <span>{cart.length} item{cart.length > 1 ? "s" : ""}</span>
+              <strong>₹{total.toFixed(2)}</strong>
+            </div>
+          </>
+        )}
+
+        {/* ── STEP 4: Success ── */}
         {step === "success" && (
           <div className="order-success">
             <div className="order-success-icon">✅</div>
             <h3>Order Placed!</h3>
             <p>Thank you, <strong>{customer.name}</strong>!</p>
-            <p className="success-sub">We'll deliver to your address soon.</p>
+            <p className="success-sub">
+              {paymentMethod === "razorpay"
+                ? "💳 Payment confirmed. Your order is confirmed."
+                : "💵 We'll contact you soon. Pay when order arrives."}
+            </p>
             <button className="close-after-order-btn" onClick={onClose}>Close</button>
           </div>
         )}

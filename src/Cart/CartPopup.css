@@ -133,10 +133,25 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 .place-order-btn:hover:not(:disabled) { background: #1b5e20; }
 .place-order-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Button variants ──────────────────── */
+.place-order-btn.cod-btn {
+  background: #1976d2;  /* Blue for COD */
+}
+.place-order-btn.cod-btn:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.place-order-btn.razorpay-btn {
+  background: #2e7d32;  /* Green for Razorpay */
+}
+.place-order-btn.razorpay-btn:hover:not(:disabled) {
+  background: #1b5e20;
+}
 
 /* ── Customer form ────────────────────── */
 .details-subtitle { color: #666; font-size: 13px; margin: 4px 0 16px; }
@@ -170,6 +185,8 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+  flex: 1;
+  transition: background 0.2s;
 }
 .back-btn:hover { background: #e5e5e5; }
 
@@ -185,6 +202,90 @@
 }
 
 .order-error { color: crimson; font-size: 13px; text-align: center; margin: 0; }
+
+/* ── Payment Methods ──────────────────── */
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.payment-option:hover {
+  border-color: #2e7d32;
+  background: #f9faf8;
+}
+
+.payment-option.selected {
+  border-color: #2e7d32;
+  background: #f0fff4;
+}
+
+.payment-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.payment-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payment-info h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.payment-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+}
+
+.payment-radio {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.payment-option.selected .payment-radio {
+  border-color: #2e7d32;
+  background: #2e7d32;
+  box-shadow: inset 0 0 0 4px white;
+}
+
+.payment-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.payment-actions .back-btn {
+  flex: 1;
+}
+
+.payment-actions .place-order-btn {
+  flex: 1;
+}
 
 /* ── Success ──────────────────────────── */
 .order-success {

@@ -1,7 +1,7 @@
 import Order from "../Models/Order.js";
 import Product from "../Models/Products.js";
 
-// POST /api/orders  — public, called by customer from cart
+// POST /api/orders  — public, called by customer from cart (CASH ON DELIVERY only)
 export const placeOrder = async (req, res) => {
   try {
     const { customer, items, total } = req.body;
@@ -33,9 +33,17 @@ export const placeOrder = async (req, res) => {
       });
     }
 
-    // ── Create the order ───────────────────────────────────────────────────
-    const order = await Order.create({ customer, items, total });
-    res.status(201).json({ message: "Order placed successfully!", order });
+    // ── Create the order (COD — no payment verification needed) ───────────
+    const order = await Order.create({
+      customer,
+      items,
+      total,
+      paymentMethod: "cash_on_delivery",
+      paymentStatus: "pending",
+      status: "Pending",
+    });
+
+    res.status(201).json({ message: "Order placed successfully! COD selected.", order });
 
   } catch (err) {
     console.error("Place order error:", err);
