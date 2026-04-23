@@ -1,50 +1,215 @@
-## NOTE - Project is still under development and updated with great feature, which are not yet added to Readme
-## 🚀 GaonWala - AI-Powered E-Commerce Platform
-####  About Me
-Hi, I’m **Harshal Argade** 👋  
-- Full Stack Web Developer and tech-savvy person.
-- Passionate about building scalable apps and solving real-world problems.  
-- Contact: [harshalargade.dev@gmail.com]
-- Linkedin : [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/harshal-argade-dev/)
-- Do visit my other Projects also.
+---
 
-## Project Details
-- Constructed a full-stack e-commerce platform that enabled farmers to sell produce online.
-- Added custom Admin Panel to Add/Edit/Delete products dynamically.
-- Engineered a context-aware AI Sales Assistant using Generative AI and Prompt Engineering to
-  answer nutritional queries and recommend in-stock products in real-time.
-- Implemented secure JWT-based authentication for admin access and built product management feature(add,
-delete, update).
-- Integrated MongoDB for dynamic product storage and retrieval, ensuring scalability.
+# 🌾 GaonWala — AI-Powered Farm-to-Table E-Commerce Platform
 
+GaonWala is a full-stack e-commerce platform built to help farmers sell fresh produce directly to customers online — with an AI assistant, secure payments, and a powerful admin panel.
+
+---
+
+## 👨‍💻 About the Developer
+
+Hi, I'm **Harshal Argade** 👋
+
+Full-Stack MERN Developer passionate about building scalable apps and solving real-world problems using modern web technologies and AI.
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/harshal-argade-dev/)
+&nbsp;
+[![Gmail](https://img.shields.io/badge/Gmail-D14836?logo=gmail&logoColor=white)](mailto:harshalargade.dev@gmail.com)
+
+---
+
+## 📋 Project Details
+
+- Built a full-stack e-commerce platform enabling farmers to list and sell fresh produce online with dynamic product management.
+- Engineered a **context-aware AI Sales Assistant** using Google Gemini API and **RAG (Retrieval-Augmented Generation)** — answers nutritional queries and recommends in-stock products in real-time using vector similarity search.
+- Implemented **URL-based category filtering** using React Router — every category has a shareable URL (`/fruit`, `/vegetable`, etc.) and the logo navigates back to all products.
+- Built a **Guest Admin Sandbox** — visitors can explore the admin panel with a 30-minute JWT session; all changes are isolated in-memory and never touch the real database.
+- Integrated **Razorpay Payment Gateway** with full signature verification — supports UPI, Cards, Wallets, Netbanking, and Cash on Delivery.
+- Implemented secure **JWT-based authentication** for admin access with role-based routing (Admin vs Guest).
+- Built a full **Order Management System** — customers place orders with delivery details, admin can view all orders and update statuses (Pending → Confirmed → Delivered → Cancelled).
+- Applied **Lighthouse performance optimizations** — code splitting, React lazy loading, image lazy loading with `fetchPriority`, and preconnect hints — improving LCP and TTI significantly.
+- Integrated **Cloudinary** for image uploads and **MongoDB Atlas** for cloud database with vector embedding support.
+
+---
 
 ## 🛠️ Tech Stack
-- **Frontend:** React.js, Vite
-- **Backend:** Node.js, Express.js
-- **Database:** MongoDB
-- **Security:** JWT (JSON Web Tokens)
-- **AI Engineering:** RAG (Retrieval-Augmented Generation), Prompt Engineering, Context Injection
 
+### Frontend
+| Technology | Purpose |
+|---|---|
+| React 19 | UI framework |
+| Vite 6 | Build tool & dev server |
+| React Router DOM 7 | Client-side routing & URL-based filtering |
+| Axios | HTTP client |
+| React Icons | Icon library |
+| CSS Modules | Component-scoped styling |
 
-## Screenshots
+### Backend
+| Technology | Purpose |
+|---|---|
+| Node.js | Runtime environment |
+| Express 5 | REST API framework |
+| MongoDB + Mongoose | Database & ODM |
+| JWT (jsonwebtoken) | Authentication & session management |
+| bcryptjs | Password hashing |
+| Multer | File/image upload handling |
+| Razorpay SDK | Payment gateway integration |
+| dotenv | Environment variable management |
+| Nodemon | Development hot-reload |
+
+### AI & Intelligence
+| Technology | Purpose |
+|---|---|
+| Google Gemini API (`@google/generative-ai`) | Generative AI for the sales assistant |
+| RAG (Retrieval-Augmented Generation) | Grounds AI responses in real product data |
+| Vector Embeddings | Similarity search for product recommendations |
+| Prompt Engineering | Context injection for accurate, relevant responses |
+
+### Payments & Security
+| Technology | Purpose |
+|---|---|
+| Razorpay | UPI, Cards, Wallet, Netbanking, EMI |
+| HMAC-SHA256 Signature Verification | Prevents payment fraud |
+| JWT Tokens | Admin & Guest session management |
+
+### DevOps & Tools
+| Technology | Purpose |
+|---|---|
+| MongoDB Atlas | Cloud database with vector search |
+| Cloudinary | Image storage & CDN |
+| Git + GitHub | Version control |
+
+---
+
+## ✨ Key Features
+
+- 🤖 **AI Sales Assistant** — Context-aware chatbot with RAG, recommends products and answers queries with proper validation not like the post you saw over internet, where customer asks for script to reverse a linkedlist.
+- 🔐 **Admin Panel** — Full CRUD for products, order management, status updates
+- 🎭 **Guest Admin Sandbox** — Explore admin features without affecting real data
+- 💳 **Razorpay Integration** — Secure online payments with signature verification
+- 💵 **Cash on Delivery** — Alternative payment option
+- 🗂️ **URL-based Category Filtering** — Shareable `/fruit`, `/vegetable`, `/seeds` routes
+- 🔍 **Product Search** — Search by name or category in the admin panel
+- 📦 **Stock Management** — Real-time stock tracking, auto-deduction on orders
+- 📱 **Responsive Design** — Optimized for mobile and desktop
+- ⚡ **Performance Optimized** — Code splitting, lazy loading, preconnect hints
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js v18+
+- MongoDB (local or Atlas)
+- Razorpay account (test keys for development)
+- Google Gemini API key
+
+### Installation
+
+```bash
+# Clone the repository
+# However this is my personal project and not ment to share source code with someone else.
+
+```
+
+### Environment Setup
+
+```bash
+# In the backend/ directory, create your .env file
+cp .env.example .env
+# Fill in your credentials (see .env.example for reference)
+```
+
+### Run the App
+
+```bash
+# Start backend (from /backend)
+npm run dev
+
+# Start frontend (from root)
+npm run dev
+```
+
+Frontend runs on `http://localhost:5173`  
+Backend runs on `http://localhost:5000`
+
+---
+
+## 📸 Screenshots
 
 ### Home Page
-<img width="1920" height="878" alt="Image" src="https://github.com/user-attachments/assets/ba977cf9-55a1-40be-bbfe-7fb62a43dbfd" />
+<!-- Add screenshot -->
 
 ### AI Assistant
-<img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/2e9576c1-e5b6-4fd2-80f6-c2bd733fb27d" />
+<!-- Add screenshot -->
 
-### Product Filter by category
-<img width="1920" height="873" alt="Image" src="https://github.com/user-attachments/assets/2f4cb727-6d29-478b-9f3d-e8e454a2cb15" />
+### Category Filtering
+<!-- Add screenshot -->
 
-### Cart Section
-<img width="1920" height="872" alt="Image" src="https://github.com/user-attachments/assets/b77fc55d-31d1-4300-8b3a-72e02b98e32b" />
+### Cart & Checkout
+<!-- Add screenshot -->
 
-### Admin Login
-<img width="1920" height="875" alt="Image" src="https://github.com/user-attachments/assets/6220109e-3549-4bee-8f7b-d0cad7e29c17" />
+### Payment — Choose Method
+<!-- Add screenshot -->
 
-### Dynamically Product Adding Section
-<img width="1920" height="467" alt="Image" src="https://github.com/user-attachments/assets/23553e6b-f235-43eb-9049-52a7b0845a0e" />
+### Razorpay Payment Gateway
+<!-- Add screenshot -->
 
-### Edit/Delete Existing Products
-<img width="1920" height="877" alt="Image" src="https://github.com/user-attachments/assets/405a74cc-d2f4-4e30-9663-15b63a17f9dd" />
+### Admin Login & Guest Sandbox
+<!-- Add screenshot -->
+
+### Admin Dashboard — Add Products
+<!-- Add screenshot -->
+
+### Admin Dashboard — Edit / Delete Products
+<!-- Add screenshot -->
+
+### Order Management
+<!-- Add screenshot -->
+
+---
+
+## 📁 Project Structure
+
+```
+gaon-wala/
+├── src/                        # React frontend
+│   ├── Banner/                 # Navbar with logo, search, cart
+│   ├── Cart/                   # Cart popup & checkout flow
+│   ├── Components/             # AdminDashboard, AdminLogin, AIChatWidget
+│   ├── Icons/                  # Category icon grid
+│   ├── Products/               # Product listing cards
+│   ├── Top_Scroll/             # Announcement ticker
+│   ├── constants/              # Category slug mappings
+│   ├── config.js               # API base URL
+│   └── App.jsx                 # Root component & routing
+│
+├── backend/
+│   ├── Controllers/            # Route handlers
+│   ├── Middlewares/            # Auth middleware (JWT)
+│   ├── Models/                 # Mongoose schemas
+│   ├── Routes/                 # API route definitions
+│   ├── utils/                  # Sandbox store, helpers
+│   ├── .env.example            # Environment variable template
+│   └── server.js               # Express app entry point
+│
+├── index.html                  # HTML entry point
+├── vite.config.js              # Vite + code splitting config
+└── README.md
+```
+
+---
+
+## 🔐 Security
+
+- `.env` excluded from Git via `.gitignore`
+- Razorpay payments verified using HMAC-SHA256 signature on backend
+- JWT tokens expire after set duration
+- Guest sessions are fully isolated in-memory — never touch the database
+- No credentials hardcoded in source code
+
+---
+
+## 📄 License
+
+I can't say this project is open source and available under the [MIT License](LICENSE), because project is not developed for sharing with someone else.
