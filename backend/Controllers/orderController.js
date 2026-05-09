@@ -14,7 +14,6 @@ export const placeOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // ── Stock validation ───────────────────────────────────────────────────
     for (const item of items) {
       const product = await Product.findById(item.productId);
       if (!product) {
@@ -27,22 +26,17 @@ export const placeOrder = async (req, res) => {
       }
     }
 
-    // ── Deduct stock ───────────────────────────────────────────────────────
     for (const item of items) {
       await Product.findByIdAndUpdate(item.productId, { $inc: { stock: -item.qty } });
     }
 
-    // ── Create order ───────────────────────────────────────────────────────
     const order = await Order.create({
-      customer,
-      items,
-      total,
+      customer, items, total,
       paymentMethod: "cash_on_delivery",
       paymentStatus: "pending",
       status: "Pending",
     });
 
-    // ── Notify customer — fire and forget, never blocks response ──────────
     sendOrderNotification("cod", customer, order);
 
     res.status(201).json({ message: "Order placed successfully! COD selected.", order });
@@ -68,14 +62,16 @@ export const getOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
+
+    // ── returnDocument: 'after' replaces deprecated { new: true } ────────
     const updated = await Order.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true }
+      { returnDocument: "after" }
     );
+
     if (!updated) return res.status(404).json({ message: "Order not found" });
 
-    // ── Notify customer of status change — fire and forget ────────────────
     if (updated.customer?.phone) {
       sendOrderNotification("status_update", updated.customer, updated);
     }
