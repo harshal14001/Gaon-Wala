@@ -1,5 +1,6 @@
 import Order from "../Models/Order.js";
 import Product from "../Models/Products.js";
+import { sendOrderNotification } from "../utils/notificationService.js";
 
 // POST /api/orders  — public, called by customer from cart (CASH ON DELIVERY only)
 export const placeOrder = async (req, res) => {
@@ -13,7 +14,7 @@ export const placeOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // ── Stock validation — check all items before touching DB ──────────────
+    // ── Stock validation ───────────────────────────────────────────────────
     for (const item of items) {
       const product = await Product.findById(item.productId);
       if (!product) {
@@ -26,14 +27,12 @@ export const placeOrder = async (req, res) => {
       }
     }
 
-    // ── Deduct stock atomically for each item ──────────────────────────────
+    // ── Deduct stock ───────────────────────────────────────────────────────
     for (const item of items) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { stock: -item.qty },
-      });
+      await Product.findByIdAndUpdate(item.productId, { $inc: { stock: -item.qty } });
     }
 
-    // ── Create the order (COD — no payment verification needed) ───────────
+    // ── Create order ───────────────────────────────────────────────────────
     const order = await Order.create({
       customer,
       items,
@@ -42,6 +41,9 @@ export const placeOrder = async (req, res) => {
       paymentStatus: "pending",
       status: "Pending",
     });
+
+    // ── Notify customer — fire and forget, never blocks response ──────────
+    sendOrderNotification("cod", customer, order);
 
     res.status(201).json({ message: "Order placed successfully! COD selected.", order });
 
@@ -72,6 +74,12 @@ export const updateOrderStatus = async (req, res) => {
       { new: true }
     );
     if (!updated) return res.status(404).json({ message: "Order not found" });
+
+    // ── Notify customer of status change — fire and forget ────────────────
+    if (updated.customer?.phone) {
+      sendOrderNotification("status_update", updated.customer, updated);
+    }
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: "Failed to update status" });
