@@ -130,37 +130,46 @@ Backend runs on `http://localhost:5000`
 ## 📸 Screenshots
 
 ### Home Page
-<!-- Add screenshot -->
+<img width="1917" height="870" alt="Image" src="https://github.com/user-attachments/assets/5265f5b8-c44c-4891-a9b0-9a2d73f68862" />
 
 ### AI Assistant
-<!-- Add screenshot -->
+<img width="1907" height="872" alt="Image" src="https://github.com/user-attachments/assets/6b88aa3f-4589-4208-849a-65988bf49c4d" />
+&nbsp;
+&nbsp;
+<img width="1917" height="866" alt="Image" src="https://github.com/user-attachments/assets/4b54e211-0249-4b2e-bc95-bde336b7e594" />
 
 ### Phone OTP Verification
-<!-- Add screenshot -->
+<img width="1917" height="870" alt="Image" src="https://github.com/user-attachments/assets/e2d2ecb5-e36c-49aa-a47b-2529af9c5a8c" />
 
 ### Category Filtering
-<!-- Add screenshot -->
+<img width="1917" height="867" alt="Image" src="https://github.com/user-attachments/assets/2be7aaf0-3618-4d8c-b31d-6f56f02ae604" />
 
 ### Cart & Checkout
-<!-- Add screenshot -->
+<img width="1917" height="867" alt="Image" src="https://github.com/user-attachments/assets/bbaa06bb-9a54-43ea-bb9f-4c88b925d414" />
+&nbsp;
+&nbsp;
 
 ### Payment Gateway
-<!-- Add screenshot -->
+<img width="1917" height="865" alt="Image" src="https://github.com/user-attachments/assets/d84cfd00-0ab8-4ee6-a0c1-6c7442f354b8" />
 
 ### Razorpay Payment Gateway
-<!-- Add screenshot -->
+<img width="1917" height="870" alt="Image" src="https://github.com/user-attachments/assets/df7910a2-2c3d-4fc9-9659-502dd0c8f6b6" />
 
 ### Admin Login & Guest Sandbox
-<!-- Add screenshot -->
+<img width="1917" height="867" alt="Image" src="https://github.com/user-attachments/assets/c48598de-d1ee-4d56-a972-28ab7ad8ecaa" />
 
 ### Admin Dashboard — Add Products
-<!-- Add screenshot -->
+<img width="1918" height="866" alt="Image" src="https://github.com/user-attachments/assets/1af243e7-29f0-4e3b-ac10-4d518c8aff80" />
 
 ### Admin Dashboard — Edit / Delete Products
-<!-- Add screenshot -->
+<img width="1917" height="867" alt="Image" src="https://github.com/user-attachments/assets/1852951a-f70f-4e4d-9140-0fe14b2ee515" />
 
 ### Order Management
-<!-- Add screenshot -->
+<img width="1917" height="862" alt="Image" src="https://github.com/user-attachments/assets/b8988c65-a576-4f39-afa2-f805884d09dd" />
+&nbsp;
+&nbsp;
+
+<img width="1917" height="1022" alt="Image" src="https://github.com/user-attachments/assets/7b45b7b3-5999-4628-bd9f-3c9d3194e615" />
 
 ---
 
