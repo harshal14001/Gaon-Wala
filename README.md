@@ -140,6 +140,9 @@ Backend runs on `http://localhost:5000`
 
 ### Phone OTP Verification
 <img width="1917" height="870" alt="Image" src="https://github.com/user-attachments/assets/e2d2ecb5-e36c-49aa-a47b-2529af9c5a8c" />
+&nbsp;
+&nbsp;
+<img width="720" height="1600" alt="Image" src="https://github.com/user-attachments/assets/85ff16b2-3870-4130-aa24-f27701375c1c" />
 
 ### Category Filtering
 <img width="1917" height="867" alt="Image" src="https://github.com/user-attachments/assets/2be7aaf0-3618-4d8c-b31d-6f56f02ae604" />
