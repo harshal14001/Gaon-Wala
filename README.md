@@ -1,6 +1,6 @@
 ---
 
-# 🌾 GaonWala — AI-Powered Farm-to-Table E-Commerce Platform
+# 🌾 GaonWala — AI-Powered E-Commerce Platform
 
 GaonWala is a full-stack e-commerce platform built to help farmers sell fresh produce directly to customers online — with an AI assistant, secure payments, and a powerful admin panel.
 
@@ -18,19 +18,26 @@ Full-Stack MERN Developer passionate about building scalable apps and solving re
 
 ---
 
-## 📋 Project Details
+## What This Project Does
 
-- Built a full-stack e-commerce platform enabling farmers to list and sell fresh produce online with dynamic product management.
-- Engineered a **context-aware AI Sales Assistant** using Google Gemini API and **RAG (Retrieval-Augmented Generation)** — answers nutritional queries and recommends in-stock products in real-time using vector similarity search.
-- Implemented **URL-based category filtering** using React Router — every category has a shareable URL (`/fruit`, `/vegetable`, etc.) and the logo navigates back to all products.
-- Built a **Guest Admin Sandbox** — visitors can explore the admin panel with a 30-minute JWT session; all changes are isolated in-memory and never touch the real database.
-- Integrated **Razorpay Payment Gateway** with full signature verification — supports UPI, Cards, Wallets, Netbanking, and Cash on Delivery.
-- Implemented secure **JWT-based authentication** for admin access with role-based routing (Admin vs Guest).
-- Built a full **Order Management System** — customers place orders with delivery details, admin can view all orders and update statuses (Pending → Confirmed → Delivered → Cancelled).
-- Applied **Lighthouse performance optimizations** — code splitting, React lazy loading, image lazy loading with `fetchPriority`, and preconnect hints — improving LCP and TTI significantly.
-- Integrated **Cloudinary** for image uploads and **MongoDB Atlas** for cloud database with vector embedding support.
+- Customers browse produce by category, verify their phone via OTP, choose a payment method, and place an order.
+- An AI assistant answers natural language queries and recommends in-stock products.
+- Admins manage products, view orders, and update delivery status through a protected dashboard.
+- A Guest Admin mode lets anyone explore the admin panel without touching real data.
 
 ---
+
+## Key Features
+
+- AI Sales Assistant — Powered by Google Gemini API with a RAG-inspired architecture. Products are embedded as 3072-dimensional vectors and stored in MongoDB Atlas. A structured prompt with few-shot examples and behavioral constraints ensures the assistant only recommends real, in-stock products — not hallucinated ones.
+- Razorpay Payment Gateway — Supports UPI, Cards, Wallets, Netbanking, and Cash on Delivery. Every online payment is verified server-side using HMAC-SHA256 signature before the order is created.
+- Firebase OTP Verification — Customers verify their phone number before checkout. Firebase handles rate limiting, OTP expiry, and retry logic.
+- Twilio Notifications — WhatsApp and SMS order confirmations sent asynchronously after order placement and on status updates, without blocking the order response.
+- Guest Admin Sandbox — A 10-minute JWT guest session with all changes isolated in-memory. Nothing written to the database.
+- URL-based Category Routing — Each category has a shareable URL (/fruit, /vegetable, /seeds). Logo click returns to all products.
+- Order Management — Admin can view all orders and move them through Pending → Confirmed → Delivered → Cancelled, triggering a customer notification on each update.
+- Stock Management — Stock is validated before order creation and decremented atomically. Out-of-stock products are flagged in the UI.
+- Performance — Code splitting, React lazy loading, fetchPriority on above-fold images, and preconnect hints applied based on Lighthouse audit results.
 
 ## 🛠️ Tech Stack
 
@@ -68,6 +75,8 @@ Full-Stack MERN Developer passionate about building scalable apps and solving re
 ### Payments & Security
 | Technology | Purpose |
 |---|---|
+| Twillo | Transactional Communication (Custom SMS/WhatsApp)|
+| Firebase Auth | Identity Verification (Phone No) via OTP |
 | Razorpay | UPI, Cards, Wallet, Netbanking, EMI |
 | HMAC-SHA256 Signature Verification | Prevents payment fraud |
 | JWT Tokens | Admin & Guest session management |
@@ -78,23 +87,6 @@ Full-Stack MERN Developer passionate about building scalable apps and solving re
 | MongoDB Atlas | Cloud database with vector search |
 | Cloudinary | Image storage & CDN |
 | Git + GitHub | Version control |
-
----
-
-## ✨ Key Features
-
-- 🤖 **AI Sales Assistant** — Context-aware chatbot with RAG, recommends products and answers queries with proper validation not like the post you saw over internet, where customer asks for script to reverse a linkedlist.
-- 🔐 **Admin Panel** — Full CRUD for products, order management, status updates
-- 🎭 **Guest Admin Sandbox** — Explore admin features without affecting real data
-- 💳 **Razorpay Integration** — Secure online payments with signature verification
-- 💵 **Cash on Delivery** — Alternative payment option
-- 🗂️ **URL-based Category Filtering** — Shareable `/fruit`, `/vegetable`, `/seeds` routes
-- 🔍 **Product Search** — Search by name or category in the admin panel
-- 📦 **Stock Management** — Real-time stock tracking, auto-deduction on orders
-- 📱 **Responsive Design** — Optimized for mobile and desktop
-- ⚡ **Performance Optimized** — Code splitting, lazy loading, preconnect hints
-
----
 
 ## 🚀 Getting Started
 
@@ -143,13 +135,16 @@ Backend runs on `http://localhost:5000`
 ### AI Assistant
 <!-- Add screenshot -->
 
+### Phone OTP Verification
+<!-- Add screenshot -->
+
 ### Category Filtering
 <!-- Add screenshot -->
 
 ### Cart & Checkout
 <!-- Add screenshot -->
 
-### Payment — Choose Method
+### Payment Gateway
 <!-- Add screenshot -->
 
 ### Razorpay Payment Gateway
@@ -173,28 +168,30 @@ Backend runs on `http://localhost:5000`
 
 ```
 gaon-wala/
-├── src/                        # React frontend
-│   ├── Banner/                 # Navbar with logo, search, cart
-│   ├── Cart/                   # Cart popup & checkout flow
-│   ├── Components/             # AdminDashboard, AdminLogin, AIChatWidget
-│   ├── Icons/                  # Category icon grid
-│   ├── Products/               # Product listing cards
-│   ├── Top_Scroll/             # Announcement ticker
-│   ├── constants/              # Category slug mappings
-│   ├── config.js               # API base URL
-│   └── App.jsx                 # Root component & routing
+├── src/
+│   ├── Banner/           # Navbar — logo, search, cart icon
+│   ├── Cart/             # Cart popup, checkout flow, OTP, payment
+│   ├── Components/       # AdminDashboard, AdminLogin, AIChatWidget
+│   ├── Icons/            # Category icon grid with active state
+│   ├── Products/         # Product listing and card components
+│   ├── Top_Scroll/       # Announcement ticker
+│   ├── constants/        # Category slug mappings
+│   ├── firebase.js       # Firebase app initialisation
+│   ├── config.js         # API base URL
+│   └── App.jsx           # Root component and routing
 │
 ├── backend/
-│   ├── Controllers/            # Route handlers
-│   ├── Middlewares/            # Auth middleware (JWT)
-│   ├── Models/                 # Mongoose schemas
-│   ├── Routes/                 # API route definitions
-│   ├── utils/                  # Sandbox store, helpers
-│   ├── .env.example            # Environment variable template
-│   └── server.js               # Express app entry point
+│   ├── Controllers/      # Route handlers
+│   ├── Middlewares/      # JWT auth middleware
+│   ├── Models/           # Mongoose schemas (Product, Order, Admin)
+│   ├── Routes/           # API route definitions
+│   ├── utils/            # sandboxStore, notificationService, promptTemplates
+│   ├── vectorize.js      # Product embedding script
+│   ├── .env.example      # Environment variable reference
+│   └── server.js         # Express entry point
 │
-├── index.html                  # HTML entry point
-├── vite.config.js              # Vite + code splitting config
+├── index.html
+├── vite.config.js        # Build config with manual chunk splitting
 └── README.md
 ```
 
@@ -203,10 +200,10 @@ gaon-wala/
 ## 🔐 Security
 
 - `.env` excluded from Git via `.gitignore`
-- Razorpay payments verified using HMAC-SHA256 signature on backend
+- Razorpay payments verified server-side before any order is written to the database.
 - JWT tokens expire after set duration
-- Guest sessions are fully isolated in-memory — never touch the database
-- No credentials hardcoded in source code
+- Guest sessions are fully in-memory and never interact with MongoDB.
+- No credentials are hardcoded anywhere in the codebase.
 
 ---
 
