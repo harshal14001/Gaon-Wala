@@ -29,7 +29,7 @@ export const placeOrder = async (req, res) => {
     for (const item of items) {
       await Product.findByIdAndUpdate(item.productId, { $inc: { stock: -item.qty } });
     }
-
+  
     const order = await Order.create({
       customer, items, total,
       paymentMethod: "cash_on_delivery",
