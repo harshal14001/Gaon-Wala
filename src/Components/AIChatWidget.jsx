@@ -21,7 +21,9 @@ const AIChatWidget = ({ cart = [], onAddToCart, onUpdateQty }) => {
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    useEffect(scrollToBottom, [messages, isOpen]);
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages, isOpen]);
 
     // ── Cart helpers ───────────────────────────────────────────────────────
     const getCartQty = (productId) => {
