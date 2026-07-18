@@ -11,8 +11,13 @@ const adminSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
+  },
+
+  createdBy:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:'Admin'
   }
-});
+},{timestamps:true});
 
 // Hash before saving
 adminSchema.pre('save', async function (next) {

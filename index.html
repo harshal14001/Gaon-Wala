@@ -2,9 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gaon-Wala</title>
+    <title>Gaon Wala</title>
+    <meta name="description" content="Gaon Wala — order fresh vegetables, fruits, milk products, plants and seeds directly from local farmers." />
+    
+    <!-- below link is for Preconnect to Cloudinary -->
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/dist/logo-gaonwala-noback.png" />
+
+    <!-- Preconnect to backend API so the product fetch starts sooner -->
+    <link rel="preconnect" href="http://localhost:5000" />
+
+    <!-- DNS prefetch for image CDN (Cloudinary) — non-blocking -->
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
+    <!-- Razorpay Payment Gateway Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
   </head>
   <body>
     <div id="root"></div>

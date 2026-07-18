@@ -2,14 +2,13 @@ import express from 'express';
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
-import Product from "../Models/Products.js";
 import {
   getProducts,
   addProduct,
-  updateProduct, 
+  updateProduct,
   deleteProduct,
 } from '../Controllers/productController.js';
-import { protectAdmin } from '../Middlewares/authMiddleware.js';
+import { protectAdminOrGuest } from '../Middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -20,7 +19,7 @@ const __dirname = path.dirname(__filename);
 // Multer Storage Engine
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads")); 
+    cb(null, path.join(__dirname, "../uploads"));
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + file.originalname;
@@ -30,16 +29,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Routes
+// Public — anyone can view products (main page)
 router.get('/', getProducts);
 
-// Add Product (POST)
-router.post('/', protectAdmin, upload.single('image'), addProduct);
-
-// Update Product (PUT) -
-router.put('/:id', protectAdmin, upload.single('image'), updateProduct);
-
-// Delete Product (DELETE)
-router.delete('/:id', protectAdmin, deleteProduct);
+// Protected — real admin writes to DB, guest writes to sandbox
+router.post('/', protectAdminOrGuest, upload.single('image'), addProduct);
+router.put('/:id', protectAdminOrGuest, upload.single('image'), updateProduct);
+router.delete('/:id', protectAdminOrGuest, deleteProduct);
 
 export default router;

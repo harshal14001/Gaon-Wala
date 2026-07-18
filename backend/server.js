@@ -13,6 +13,7 @@ import productRoutes from './Routes/productRoutes.js';
 import adminRoutes from './Routes/adminRoutes.js';
 import aiRoutes from './Routes/aiRoutes.js';
 import orderRoutes from './Routes/orderRoutes.js';
+import razorpayRoutes from './Routes/razorpayRoutes.js';
 
 // ---------------------
 // Init Express app
@@ -41,6 +42,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/razorpay', razorpayRoutes);
 
 // ---------------------
 // Connect DB & Start Server

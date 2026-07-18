@@ -3,15 +3,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { API_URL } from '../config.js';
 import './AIChatWidget.css';
 
-import amicoImage   from "../icons/chat-bot-amico.png";
-import farmerAvatar from "../icons/hello-chat-bot.webm";
+// Desktop trigger image — static PNG, tiny, safe to eager-load
+import amicoImage from "../icons/chat-bot-amico.png";
+
+// Mobile trigger + chat header — .webm video.
+// Loaded via URL (not import) so Vite doesn't inline it.
+// preload="none" on all uses → browser won't fetch until the element plays.
+const farmerAvatarSrc = new URL('../icons/hello-chat-bot.webm', import.meta.url).href;
 
 const AIChatWidget = ({ cart = [], onAddToCart, onUpdateQty }) => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen]     = useState(false);
     const [messages, setMessages] = useState([
         { type: 'ai', text: "Namaste! 🙏 I am your GaonWala Assistant. How can I help you shop today?", products: [] }
     ]);
-    const [input, setInput] = useState("");
+    const [input, setInput]   = useState("");
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
 
@@ -56,12 +61,9 @@ const AIChatWidget = ({ cart = [], onAddToCart, onUpdateQty }) => {
             const data = await response.json();
 
             if (!response.ok) {
-                // 503, 500, any error status — show friendly message
                 setMessages(prev => [...prev, {
-                    type: 'ai',
-                    text: "⏳ Something went wrong on our end. Please try again in a moment!",
-                    products: [],
-                    isError: true,
+                    type: 'ai', text: "⏳ Something went wrong on our end. Please try again in a moment!",
+                    products: [], isError: true,
                 }]);
                 return;
             }
@@ -74,18 +76,14 @@ const AIChatWidget = ({ cart = [], onAddToCart, onUpdateQty }) => {
                 }]);
             } else {
                 setMessages(prev => [...prev, {
-                    type: 'ai',
-                    text: "Sorry, I couldn't process that. Please try again.",
-                    products: [],
-                    isError: true,
+                    type: 'ai', text: "Sorry, I couldn't process that. Please try again.",
+                    products: [], isError: true,
                 }]);
             }
         } catch {
             setMessages(prev => [...prev, {
-                type: 'ai',
-                text: "⚠️ Could not reach the server. Please check your connection.",
-                products: [],
-                isError: true,
+                type: 'ai', text: "⚠️ Could not reach the server. Please check your connection.",
+                products: [], isError: true,
             }]);
         } finally {
             setLoading(false);
@@ -96,7 +94,7 @@ const AIChatWidget = ({ cart = [], onAddToCart, onUpdateQty }) => {
     return (
         <div className="ai-widget-container">
 
-            {/* Desktop Trigger */}
+            {/* ── Desktop Trigger: static PNG (shown on ≥768px) ── */}
             {!isOpen && (
                 <div className="ai-desktop-trigger" onClick={() => setIsOpen(true)}>
                     <div className="ai-trigger-text">
@@ -104,36 +102,62 @@ const AIChatWidget = ({ cart = [], onAddToCart, onUpdateQty }) => {
                         <span>Ask our AI</span>
                     </div>
                     <div className="ai-trigger-img-container">
-                        <img src={amicoImage} alt="AI Assistant" className="ai-trigger-img" />
+                        <img
+                            src={amicoImage}
+                            alt="AI Assistant"
+                            className="ai-trigger-img"
+                            loading="lazy"
+                            decoding="async"
+                        />
                     </div>
                 </div>
             )}
 
-            {/* Mobile Trigger */}
+            {/* ── Mobile Trigger: farmer video avatar (shown on <768px) ──
+                preload="none" → browser skips downloading until play() is called.
+                autoPlay kicks in only after the element mounts on mobile,
+                which is after the critical page paint is done.             ── */}
             {!isOpen && (
                 <div className="ai-mobile-container" onClick={() => setIsOpen(true)}>
                     <div className="ai-mobile-text">
                         Questioned what to shop? <br />
                         <span>Ask our AI</span>
                     </div>
-                    <button className="ai-mobile-trigger">
-                        <video src={farmerAvatar} autoPlay loop muted playsInline
-                            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                    <button className="ai-mobile-trigger" aria-label="Open AI chat">
+                        <video
+                            src={farmerAvatarSrc}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            preload="none"
+                            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                        />
                     </button>
                 </div>
             )}
 
-            {/* Chat Window */}
+            {/* ── Chat Window: video avatar in header (both screens) ── */}
             {isOpen && (
                 <div className="ai-chat-window">
                     <div className="ai-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <video src={farmerAvatar} autoPlay loop muted playsInline
-                                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                            <video
+                                src={farmerAvatarSrc}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                preload="none"
+                                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+                            />
                             <h3>GaonWala AI Assistant</h3>
                         </div>
-                        <button onClick={() => setIsOpen(false)}
-                            style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}>×</button>
+                        <button
+                            onClick={() => setIsOpen(false)}
+                            style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}
+                            aria-label="Close chat"
+                        >×</button>
                     </div>
 
                     <div className="ai-messages">
@@ -153,7 +177,13 @@ const AIChatWidget = ({ cart = [], onAddToCart, onUpdateQty }) => {
 
                                             return (
                                                 <div key={product._id} className="ai-product-card">
-                                                    <img src={product.image} alt={product.title} className="ai-product-img" />
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.title}
+                                                        className="ai-product-img"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                    />
                                                     <div className="ai-product-info">
                                                         <h4>{product.title}</h4>
                                                         <p>₹{product.price}</p>
@@ -202,7 +232,7 @@ const AIChatWidget = ({ cart = [], onAddToCart, onUpdateQty }) => {
                             placeholder="Ask regarding products..."
                             disabled={loading}
                         />
-                        <button onClick={handleSend} disabled={loading}>➤</button>
+                        <button onClick={handleSend} disabled={loading} aria-label="Send message">➤</button>
                     </div>
                 </div>
             )}

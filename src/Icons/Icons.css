@@ -6,31 +6,62 @@
   padding: 2rem;
 }
 
+/* Default — all tiles fully visible on home page */
 .tile_padding {
-  margin-top: -9px; 
+  margin-top: -9px;
   text-align: center;
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   text-decoration: none;
-  transition: transform 0.3s ease;
+  color: inherit;
+  display: block;
+  border-radius: 16px;
+  opacity: 1;
+  transition: opacity 0.25s ease, transform 0.2s ease;
 }
 
 .tile_padding:hover {
-  transform: scale(1.05);
+  transform: translateY(-2px);
 }
 
+/* ── When a category IS selected: dim all siblings ──────────────────
+   Parent gets .has-active class (set in JSX), then every child that
+   is NOT .tile_active gets faded out.                               */
+.icons-grid.has-active .tile_padding:not(.tile_active) {
+  opacity: 0.35;
+}
+
+.icons-grid.has-active .tile_padding:not(.tile_active):hover {
+  opacity: 0.65;
+}
+
+/* Active tile — full opacity + slight lift */
+.tile_active {
+  opacity: 1;
+  transform: translateY(-3px);
+}
+
+/* ── Icon image ─────────────────────────────────────── */
 .logo-list__image {
-  padding:14px;
+  padding: 14px;
   width: 70px;
   height: 70px;
   object-fit: contain;
   border-radius: 50%;
   background-color: #f5f5f5;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: block;
+  margin: 0 auto;
 }
 
+/* ── Label ──────────────────────────────────────────── */
 .icon-title {
   margin-top: 0.5rem;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #333;
+}
+
+.tile_active .icon-title {
+  font-weight: 700;
+  color: #2e7d32;
 }

@@ -1,7 +1,8 @@
 import Order from "../Models/Order.js";
 import Product from "../Models/Products.js";
+import { sendOrderNotification } from "../utils/notificationService.js";
 
-// POST /api/orders  — public, called by customer from cart
+// POST /api/orders  — public, called by customer from cart (CASH ON DELIVERY only)
 export const placeOrder = async (req, res) => {
   try {
     const { customer, items, total } = req.body;
@@ -13,7 +14,6 @@ export const placeOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // ── Stock validation — check all items before touching DB ──────────────
     for (const item of items) {
       const product = await Product.findById(item.productId);
       if (!product) {
@@ -26,16 +26,20 @@ export const placeOrder = async (req, res) => {
       }
     }
 
-    // ── Deduct stock atomically for each item ──────────────────────────────
     for (const item of items) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { stock: -item.qty },
-      });
+      await Product.findByIdAndUpdate(item.productId, { $inc: { stock: -item.qty } });
     }
+  
+    const order = await Order.create({
+      customer, items, total,
+      paymentMethod: "cash_on_delivery",
+      paymentStatus: "pending",
+      status: "Pending",
+    });
 
-    // ── Create the order ───────────────────────────────────────────────────
-    const order = await Order.create({ customer, items, total });
-    res.status(201).json({ message: "Order placed successfully!", order });
+    sendOrderNotification("cod", customer, order);
+
+    res.status(201).json({ message: "Order placed successfully! COD selected.", order });
 
   } catch (err) {
     console.error("Place order error:", err);
@@ -58,12 +62,20 @@ export const getOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
+
+    // ── returnDocument: 'after' replaces deprecated { new: true } ────────
     const updated = await Order.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true }
+      { returnDocument: "after" }
     );
+
     if (!updated) return res.status(404).json({ message: "Order not found" });
+
+    if (updated.customer?.phone) {
+      sendOrderNotification("status_update", updated.customer, updated);
+    }
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: "Failed to update status" });
