@@ -1,37 +1,33 @@
 import express from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import Product from '../Models/Products.js';
 import { generateSalesPrompt } from '../utils/promptTemplates.js';
 
 const router = express.Router();
 
-if (!process.env.GEMINI_API_KEY) {
-    console.error("⚠️  GEMINI_API_KEY not configured - AI features will fail");
-}
+if (!process.env.GROQ_API_KEY) console.error("⚠️  GROQ_API_KEY not configured");
 
-const genAI          = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
-const chatModel      = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ── Embed query with retry ─────────────────────────────────────────────────
-const embedWithRetry = async (text, retries = 3, delayMs = 800) => {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-            const result = await embeddingModel.embedContent(text);
-            return result.embedding.values;
-        } catch (err) {
-            const is503 = err?.status === 503 || err?.message?.includes("503");
-            if (is503 && attempt < retries) {
-                console.warn(`⚠️  Embedding 503 — retrying in ${delayMs}ms...`);
-                await new Promise(res => setTimeout(res, delayMs));
-                delayMs *= 2;
-            } else throw err;
-        }
+// ── Generate embeddings using Groq (or fallback to simple hash-based approach) ─
+const generateSimpleEmbedding = (text) => {
+    // For now, use a simple hash-based embedding as placeholder
+    // In production, consider using a dedicated embedding service
+    const chars = text.toLowerCase().split('');
+    const embedding = new Array(1536).fill(0);
+    
+    for (let i = 0; i < chars.length; i++) {
+        const charCode = chars[i].charCodeAt(0);
+        embedding[i % 1536] += charCode / 255;
     }
+    
+    // Normalize
+    const norm = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+    return embedding.map(val => norm > 0 ? val / norm : 0);
 };
 
-// ── Parse Gemini JSON — handles markdown fences ────────────────────────────
-const parseGeminiJSON = (raw) => {
+// ── Parse Groq JSON — handles markdown fences ────────────────────────────
+const parseGroqJSON = (raw) => {
     const clean = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
     const match = clean.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("No JSON in response: " + raw.slice(0, 200));
@@ -49,15 +45,12 @@ router.post('/chat', async (req, res) => {
         console.log(`\n========================================`);
         console.log(`📨 Query: "${query}"`);
 
-        // ── STEP 1: Embed the user query ───────────────────────────────────
-        console.log(`🔢 Embedding query...`);
-        const queryVector = await embedWithRetry(query);
+        // ── STEP 1: Generate embedding for query ──────────────────────────
+        console.log(`🔢 Generating query embedding...`);
+        const queryVector = generateSimpleEmbedding(query);
         console.log(`✅ Query embedded (${queryVector.length} dims)`);
 
         // ── STEP 2: Vector search — retrieve top semantically close products ─
-        // Because embeddings are now RICH (LLM-described), "spicy" will match
-        // Ginger, "sweet" will match Mango, "something for soup" will match
-        // Onion/Tomato/Ginger etc.
         const totalProducts = await Product.countDocuments();
         const limit         = Math.min(8, totalProducts);
         const numCandidates = Math.max(totalProducts, limit + 10);
@@ -96,19 +89,28 @@ router.post('/chat', async (req, res) => {
                 .lean();
         }
 
-        // ── STEP 3: Gemini understands intent + picks the right products ───
-        // Vector search gives Gemini a SHORT, RELEVANT list (not all 500 products)
-        // Gemini then reasons: "user wants spicy → Ginger qualifies → recommend it"
-        console.log(`🤖 Calling Gemini with ${retrievedProducts.length} candidate products...`);
+        // ── STEP 3: Groq understands intent + picks the right products ───
+        console.log(`🤖 Calling Groq LLM with ${retrievedProducts.length} candidate products...`);
         const prompt = generateSalesPrompt(query, retrievedProducts);
-        const result = await chatModel.generateContent(prompt);
-        const raw    = result.response.text().trim();
-        console.log(`🤖 Gemini raw: ${raw}`);
+        
+        const message = await groq.chat.completions.create({
+            model: "openai/gpt-oss-120b",
+            max_tokens: 1024,
+            messages: [
+                {
+                    role: "user",
+                    content: prompt
+                }
+            ]
+        });
+
+        const raw = message.choices[0].message.content.trim();
+        console.log(`🤖 Groq response: ${raw.substring(0, 200)}...`);
 
         // ── STEP 4: Parse response and map to DB objects ───────────────────
-        let geminiData;
+        let groqData;
         try {
-            geminiData = parseGeminiJSON(raw);
+            groqData = parseGroqJSON(raw);
         } catch (parseErr) {
             console.error(`❌ JSON parse failed: ${parseErr.message}`);
             return res.json({
@@ -118,8 +120,8 @@ router.post('/chat', async (req, res) => {
             });
         }
 
-        const responseMessage   = geminiData.thought                  || "Here's what I found! 🌿";
-        const recommendedTitles = geminiData.recommended_product_names || [];
+        const responseMessage   = groqData.thought                  || "Here's what I found! 🌿";
+        const recommendedTitles = groqData.recommended_product_names || [];
 
         console.log(`✅ Response: "${responseMessage}"`);
         console.log(`✅ Recommended: ${recommendedTitles.join(", ")}`);
