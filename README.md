@@ -26,7 +26,7 @@ GaonWala is a full-stack e-commerce platform built to help farmers sell fresh pr
 
 ## Key Features
 
-- **AI Sales Assistant** — Powered by Google Gemini API with a RAG-inspired architecture. Products are embedded as 3072-dimensional vectors and stored in MongoDB Atlas. A structured prompt with few-shot examples and behavioral constraints ensures the assistant only recommends real, in-stock products — not hallucinated ones.
+- **AI Sales Assistant** — Powered by the Groq SDK (using the `openai/gpt-oss-120b` Groq-hosted model) with a RAG-inspired architecture. Products are embedded as 3072-dimensional vectors and stored in MongoDB Atlas. A structured prompt with few-shot examples and behavioral constraints ensures the assistant only recommends real, in-stock products — not hallucinated ones.
 - **Razorpay Payment Gateway** — Supports UPI, Cards, Wallets, Netbanking, and Cash on Delivery. Every online payment is verified server-side using HMAC-SHA256 signature before the order is created.
 - **Firebase OTP Verification** — Customers verify their phone number before checkout. Firebase handles rate limiting, OTP expiry, and retry logic.
 - **Twilio Notifications** — WhatsApp and SMS order confirmations sent asynchronously after order placement and on status updates, without blocking the order response.
@@ -64,6 +64,8 @@ GaonWala is a full-stack e-commerce platform built to help farmers sell fresh pr
 ### AI & Intelligence
 | Technology | Purpose |
 |---|---|
+| Groq SDK | Blazing fast API routing for the sales assistant |
+| `openai/gpt-oss-120b` | Large Language Model processing the natural language queries |
 | Google Gemini API (`@google/generative-ai`) | Generative AI for the sales assistant |
 | RAG (Retrieval-Augmented Generation) | Grounds AI responses in real product data |
 | Vector Embeddings | Similarity search for product recommendations |
