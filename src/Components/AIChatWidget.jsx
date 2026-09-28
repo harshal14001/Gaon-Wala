@@ -4,12 +4,12 @@ import { API_URL } from '../config.js';
 import './AIChatWidget.css';
 
 // Desktop trigger image — static PNG, tiny, safe to eager-load
-import amicoImage from "../icons/chat-bot-amico.png";
+import amicoImage from "../Icons/chat-bot-amico.png";
 
 // Mobile trigger + chat header — .webm video.
 // Loaded via URL (not import) so Vite doesn't inline it.
 // preload="none" on all uses → browser won't fetch until the element plays.
-const farmerAvatarSrc = new URL('../icons/hello-chat-bot.webm', import.meta.url).href;
+const farmerAvatarSrc = new URL('../Icons/hello-chat-bot.webm', import.meta.url).href;
 
 const AIChatWidget = ({ cart = [], onAddToCart, onUpdateQty }) => {
     const [isOpen, setIsOpen]     = useState(false);
