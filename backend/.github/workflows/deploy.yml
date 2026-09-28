@@ -7,6 +7,8 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    env:
+      DOCKER_BUILDKIT: 0
 
     steps:
       - name: Checkout code
@@ -15,14 +17,17 @@ jobs:
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Set up Docker Buildx
-        run: docker buildx create --use --name gaonwala-builder 2>/dev/null || docker buildx use gaonwala-builder
+      - name: Build backend image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/gaonwala-backend:latest ./backend
 
-      - name: Build and push backend
-        run: docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/gaonwala-backend:latest ./backend
+      - name: Build frontend image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/gaonwala-frontend:latest .
 
-      - name: Build and push frontend
-        run: docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/gaonwala-frontend:latest .
+      - name: Push backend image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/gaonwala-backend:latest
+
+      - name: Push frontend image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/gaonwala-frontend:latest
 
       - name: Create .env file
         run: |
