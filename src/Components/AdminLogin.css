@@ -3,19 +3,24 @@
   inset: 0;
   background-color: rgba(0, 0, 0, 0.6);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  /* Padding keeps the card off the screen edges on small phones; the
+     overlay itself scrolls if the card is taller than the screen. */
+  padding: 12px;
+  overflow-y: auto;
   z-index: 9999;
   backdrop-filter: blur(2px);
 }
 
 .admin-login-modal {
   background: white;
-  padding: 2rem;
+  padding: clamp(1.25rem, 5vw, 2rem);
   border-radius: 12px;
   position: relative;
   width: 100%;
   max-width: 400px;
+  /* margin:auto centres the card both ways AND stays scrollable when it's
+     taller than the viewport (align-items:center would clip the top). */
+  margin: auto;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   animation: fadeInScale 0.3s ease-out;
   font-family: "Segoe UI", sans-serif;
@@ -52,7 +57,7 @@
 .admin-login-modal h2 {
   text-align: center;
   margin-bottom: 1.5rem;
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 5vw, 1.5rem);
   color: #333;
 }
 
@@ -60,6 +65,7 @@
   width: 100%;
   margin-top: 1rem;
   padding: 0.75rem 1rem;
+  /* 16px — prevents iOS Safari auto-zoom on focus */
   font-size: 1rem;
   border-radius: 6px;
   border: 1px solid #ccc;

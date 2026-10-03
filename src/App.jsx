@@ -6,10 +6,9 @@ import { API_URL } from "./config.js";
 import { SLUG_TO_CATEGORY } from "./constants/categories.js";
 
 // ── Always eager: these are on the critical path for every visitor ────────────
-import Banner   from "./Banner/Banner";
+import Header   from "./Header/Header";
 import Icons    from "./Icons/Icons";
 import Products from "./Products/Products";
-import Scroll   from "./Top_Scroll/Scroll";
 
 // ── Lazy: loaded only when the user actually triggers them ────────────────────
 const CartPopup      = lazy(() => import("./Cart/CartPopup"));
@@ -76,8 +75,7 @@ const ShopPage = ({
 
   return (
     <>
-      <Scroll />
-      <Banner
+      <Header
         cart={cart}
         onCartClick={() => setShowCart(true)}
         onSearch={setSearchQuery}

@@ -7,11 +7,21 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Stops phones from re-scaling text when the device is rotated */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Reserves scrollbar space so the page doesn't shift sideways when a
+     modal locks scrolling (cart popup) */
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: sans-serif;
   background-color: #fff; /* or your theme */
   color: #333;
 }
 
-
-/**/
+img {
+  max-width: 100%;
+}

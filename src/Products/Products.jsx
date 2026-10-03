@@ -120,29 +120,32 @@ const Products = ({ selectedCategory, searchQuery, cart, setCart }) => {
               className={`product-card ${outOfStock ? "out-of-stock-card" : ""} ${inCart ? "in-cart-card" : ""}`}
               key={product._id}
             >
-              {outOfStock ? (
-                <span className="stock-badge out-of-stock-badge">Out of Stock</span>
-              ) : product.stock <= 5 ? (
+              {/* Low-stock nudge only — the out-of-stock state is shown on the image below */}
+              {!outOfStock && product.stock <= 5 && (
                 <span className="stock-badge low-stock-badge">Only {product.stock} left!</span>
-              ) : null}
+              )}
 
-              <img
-                src={product.image || "/placeholder.png"}
-                alt={product.title}
-                className={`product-image ${outOfStock ? "img-greyed" : ""}`}
-                // First 4 cards are above-the-fold (likely LCP candidates) → eager
-                // Everything else → lazy so they don't compete for bandwidth
-                loading={index < 4 ? "eager" : "lazy"}
-                decoding="async"
-                width="200"
-                height="200"
-              />
+              <div className="product-image-wrap">
+                <img
+                  src={product.image || "/placeholder.png"}
+                  alt={product.title}
+                  className={`product-image ${outOfStock ? "img-greyed" : ""}`}
+                  // First 4 cards are above-the-fold (likely LCP candidates) → eager
+                  // Everything else → lazy so they don't compete for bandwidth
+                  loading={index < 4 ? "eager" : "lazy"}
+                  decoding="async"
+                  width="200"
+                  height="200"
+                />
+                {outOfStock && <span className="oos-overlay">Out of stock</span>}
+              </div>
+
               <h3 className="product-title">{product.title}</h3>
               <p className="product-price">₹{product.price}</p>
 
               <div className="cart-buttons">
                 {outOfStock && (
-                  <button className="out-of-stock-btn" disabled>Out of Stock</button>
+                  <button className="out-of-stock-btn" disabled>Unavailable</button>
                 )}
 
                 {!outOfStock && !inCart && (

@@ -1,33 +1,46 @@
 import express from 'express';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 import Product from '../Models/Products.js';
 import { generateSalesPrompt } from '../utils/promptTemplates.js';
 
 const router = express.Router();
 
-if (!process.env.GROQ_API_KEY) console.error("⚠️  GROQ_API_KEY not configured");
+if (!process.env.GEMINI_API_KEY) console.error("⚠️  GEMINI_API_KEY not configured — retrieval will fall back to the full product list");
+if (!process.env.GROQ_API_KEY)   console.error("⚠️  GROQ_API_KEY not configured — AI replies will be unavailable");
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+// Query embeddings MUST come from the same model vectorize.js used for the
+// product embeddings (gemini-embedding-001, 3072 dims). Vectors from any other
+// model (or a different dimension count) live in a different space, so the
+// similarity scores would be meaningless — and Atlas rejects the mismatch.
+const genAI          = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
 
-// ── Generate embeddings using Groq (or fallback to simple hash-based approach) ─
-const generateSimpleEmbedding = (text) => {
-    // For now, use a simple hash-based embedding as placeholder
-    // In production, consider using a dedicated embedding service
-    const chars = text.toLowerCase().split('');
-    const embedding = new Array(1536).fill(0);
-    
-    for (let i = 0; i < chars.length; i++) {
-        const charCode = chars[i].charCodeAt(0);
-        embedding[i % 1536] += charCode / 255;
+// Built only when a key exists: `new Groq()` throws without one, which would
+// crash the whole backend (orders, payments, admin) over a missing AI key.
+const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
+
+// ── Embed the user query (retries transient 503s) ────────────────────────────
+const embedWithRetry = async (text, retries = 3, delayMs = 800) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const result = await embeddingModel.embedContent(text);
+            return result.embedding.values;
+        } catch (err) {
+            const is503 = err?.status === 503 || err?.message?.includes("503");
+            if (is503 && attempt < retries) {
+                console.warn(`⚠️  Embedding 503 — retry ${attempt}/${retries} in ${delayMs}ms`);
+                await new Promise((res) => setTimeout(res, delayMs));
+                delayMs *= 2;
+            } else {
+                throw err;
+            }
+        }
     }
-    
-    // Normalize
-    const norm = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-    return embedding.map(val => norm > 0 ? val / norm : 0);
 };
 
-// ── Parse Groq JSON — handles markdown fences ────────────────────────────
-const parseGroqJSON = (raw) => {
+// ── Parse the LLM's JSON — tolerates markdown fences / stray text ─────────────
+const parseJSON = (raw) => {
     const clean = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
     const match = clean.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("No JSON in response: " + raw.slice(0, 200));
@@ -42,28 +55,38 @@ router.post('/chat', async (req, res) => {
             return res.status(400).json({ success: false, error: "Query required" });
         }
 
+        if (!groq) {
+            return res.status(503).json({ success: false, error: "AI assistant is not configured" });
+        }
+
         console.log(`\n========================================`);
         console.log(`📨 Query: "${query}"`);
 
-        // ── STEP 1: Generate embedding for query ──────────────────────────
-        console.log(`🔢 Generating query embedding...`);
-        const queryVector = generateSimpleEmbedding(query);
-        console.log(`✅ Query embedded (${queryVector.length} dims)`);
+        // One fetch, reused for retrieval fallback AND mapping the LLM's picks back
+        const allProducts = await Product.find({})
+            .select('title price stock image category')
+            .lean();
 
-        // ── STEP 2: Vector search — retrieve top semantically close products ─
-        const totalProducts = await Product.countDocuments();
-        const limit         = Math.min(8, totalProducts);
-        const numCandidates = Math.max(totalProducts, limit + 10);
+        if (allProducts.length === 0) {
+            return res.json({
+                success: true,
+                responseMessage: "Sorry ji, our shop is currently empty!",
+                productsToDisplay: []
+            });
+        }
 
-        console.log(`🔍 Vector search (limit: ${limit}, candidates: ${numCandidates})...`);
-        let retrievedProducts = [];
-
+        // ── STEP 1+2: Retrieval — embed the query, vector-search the closest products ──
+        let candidates = [];
         try {
-            retrievedProducts = await Product.aggregate([
+            const queryVector   = await embedWithRetry(query);
+            const limit         = Math.min(8, allProducts.length);
+            const numCandidates = Math.max(allProducts.length, limit + 10);
+
+            candidates = await Product.aggregate([
                 {
                     $vectorSearch: {
-                        index:        "vector_index",
-                        path:         "embedding",
+                        index: "vector_index",
+                        path:  "embedding",
                         queryVector,
                         numCandidates,
                         limit,
@@ -71,46 +94,32 @@ router.post('/chat', async (req, res) => {
                 },
                 { $project: { embedding: 0, __v: 0 } }
             ]);
-            console.log(`✅ Vector search returned ${retrievedProducts.length} products`);
-            console.log(`   Top matches: ${retrievedProducts.map(p => p.title).join(", ")}`);
+            console.log(`🔍 Vector search → ${candidates.length} candidates: ${candidates.map((p) => p.title).join(", ")}`);
         } catch (err) {
-            // Vector search failed — fall back to full product list
-            console.warn(`⚠️  Vector search failed: ${err.message}`);
-            console.log(`   Falling back to full product list...`);
-            retrievedProducts = await Product.find({})
-                .select('title price stock image category')
-                .lean();
+            console.warn(`⚠️  Retrieval failed (${err.message}) — using the full product list`);
         }
 
-        if (retrievedProducts.length === 0) {
-            console.warn(`⚠️  No results — falling back to full product list`);
-            retrievedProducts = await Product.find({})
-                .select('title price stock image category')
-                .lean();
-        }
+        if (candidates.length === 0) candidates = allProducts;
 
-        // ── STEP 3: Groq understands intent + picks the right products ───
-        console.log(`🤖 Calling Groq LLM with ${retrievedProducts.length} candidate products...`);
-        const prompt = generateSalesPrompt(query, retrievedProducts);
-        
-        const message = await groq.chat.completions.create({
+        // ── STEP 3: LLM understands the intent and picks from the candidates ──
+        // gpt-oss is a reasoning model: reasoning tokens come out of the same
+        // budget as the answer, so keep effort low and the limit generous —
+        // otherwise it can burn the whole budget thinking and return nothing.
+        const prompt     = generateSalesPrompt(query, candidates);
+        const completion = await groq.chat.completions.create({
             model: "openai/gpt-oss-120b",
-            max_tokens: 1024,
-            messages: [
-                {
-                    role: "user",
-                    content: prompt
-                }
-            ]
+            reasoning_effort: "low",
+            max_completion_tokens: 2048,
+            messages: [{ role: "user", content: prompt }],
         });
 
-        const raw = message.choices[0].message.content.trim();
-        console.log(`🤖 Groq response: ${raw.substring(0, 200)}...`);
+        const raw = completion.choices?.[0]?.message?.content?.trim() || "";
+        console.log(`🤖 LLM: ${raw.slice(0, 200)}${raw.length > 200 ? "…" : ""}`);
 
-        // ── STEP 4: Parse response and map to DB objects ───────────────────
-        let groqData;
+        // ── STEP 4: Parse + map the LLM's titles back to full product objects ──
+        let data;
         try {
-            groqData = parseGroqJSON(raw);
+            data = parseJSON(raw);
         } catch (parseErr) {
             console.error(`❌ JSON parse failed: ${parseErr.message}`);
             return res.json({
@@ -120,27 +129,20 @@ router.post('/chat', async (req, res) => {
             });
         }
 
-        const responseMessage   = groqData.thought                  || "Here's what I found! 🌿";
-        const recommendedTitles = groqData.recommended_product_names || [];
+        const responseMessage   = data.thought || "Here's what I found! 🌿";
+        const recommendedTitles = Array.isArray(data.recommended_product_names)
+            ? data.recommended_product_names
+            : [];
 
-        console.log(`✅ Response: "${responseMessage}"`);
-        console.log(`✅ Recommended: ${recommendedTitles.join(", ")}`);
-
-        // Map titles back to full product objects (case-insensitive)
-        const allProducts      = await Product.find({}).select('title price stock image category').lean();
         const productsToDisplay = recommendedTitles
-            .map(title => allProducts.find(p => p.title.toLowerCase() === title.toLowerCase()))
+            .map((title) => allProducts.find((p) => p.title.toLowerCase() === String(title).toLowerCase()))
             .filter(Boolean)
-            .filter(p => (p.stock ?? 0) > 0);
+            .filter((p) => (p.stock ?? 0) > 0);
 
-        console.log(`🛒 Showing ${productsToDisplay.length} cards`);
+        console.log(`🛒 "${responseMessage}" → ${productsToDisplay.length} card(s)`);
         console.log(`========================================\n`);
 
-        return res.json({
-            success: true,
-            responseMessage,
-            productsToDisplay
-        });
+        return res.json({ success: true, responseMessage, productsToDisplay });
 
     } catch (error) {
         console.error("❌ AI Route Error:", error.message);

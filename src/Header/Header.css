@@ -1,0 +1,21 @@
+/* src/Header/Header.css */
+
+/* Sticky = stays in document flow, so hiding it never changes the page
+   height and content below never jumps. Hiding is transform-only. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+  will-change: transform;
+}
+
+/* Only applied once the user has scrolled past the header's own height
+   (see Header.jsx), so no blank space is ever left where it used to be. */
+.site-header--hidden {
+  transform: translateY(-100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header { transition: none; }
+}

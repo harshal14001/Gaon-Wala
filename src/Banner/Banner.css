@@ -1,34 +1,28 @@
+/* ── Header bar ───────────────────────────────────────────────────────────
+   Sticky positioning lives on the .site-header wrapper (src/Header/Header.css)
+   so the announcement bar + this bar hide/show together on scroll.
+
+   MOBILE (default): compact two rows
+       [ logo ..................... cart  admin ]
+       [ search ................................ ]
+   DESKTOP (>= 768px): single row — search | logo | icons                */
 .store-header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
   background-color: #fff;
   border-bottom: 1px solid rgba(119, 123, 119, 0.552);
-  padding: 1rem 2vw;
+  padding: 0.5rem clamp(0.75rem, 3vw, 2rem);
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.search-wrapper,
-.logo-container,
-.icon-wrapper-group {
-  display: flex;
-  align-items: center;
-  flex: 1 1 100%;
-}
-
-.search-wrapper {
-  justify-content: center;
-  order: 2;
+  gap: 0.5rem 1rem;
 }
 
 .logo-container {
-  justify-content: center;
   order: 1;
-  /* Reset <a> tag defaults — logo-container is now a <Link> */
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  /* Reset <a> tag defaults — logo-container is a <Link> */
   text-decoration: none;
   color: inherit;
   cursor: pointer;
@@ -41,13 +35,23 @@
 }
 
 .icon-wrapper-group {
-  justify-content: center;
-  gap: 20px;
+  order: 2;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-wrapper {
   order: 3;
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
 }
 
 .nav-img {
-  height: 90px;
+  height: clamp(36px, 11vw, 52px);
+  width: auto;
   max-width: 100%;
   object-fit: contain;
   transition: opacity 0.15s ease;
@@ -59,42 +63,57 @@
 
 .search-input {
   width: 100%;
-  max-width: 300px;
-  padding: 0.7em 1em;
+  padding: 0.55em 0.9em;
+  /* Keep at 16px — smaller sizes make iOS Safari zoom the page on focus */
   font-size: 1rem;
   border-radius: 0.5em;
   border: 1px solid #676b68;
 }
 
+/* Icon buttons — padded so they're a comfortable ~40px tap target */
+.cart-icon-wrapper,
+.admin-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  cursor: pointer;
+}
+
 .icon-cart,
 .icon-admin {
-  font-size: 1.8rem;
+  display: block;
+  font-size: 1.6rem;
   color: #333;
   cursor: pointer;
 }
 
-.cart-icon-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
 .cart-count {
   position: absolute;
-  top: -8px;
-  right: -10px;
-  width: 20px;
-  height: 20px;
+  top: -2px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: red;
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: bold;
-  border-radius: 50%;
+  border-radius: 9px;
 }
 
+/* ── Desktop / large tablet ─────────────────────────────────────────────── */
 @media (min-width: 768px) {
+  .store-header {
+    padding: 1rem 2vw;
+    flex-wrap: nowrap;
+    gap: 1rem;
+  }
+
   .search-wrapper,
   .logo-container,
   .icon-wrapper-group {
@@ -102,21 +121,16 @@
     order: unset;
   }
 
-  .search-wrapper {
-    justify-content: flex-start;
-  }
+  .search-wrapper      { justify-content: flex-start; }
+  .logo-container      { justify-content: center; }
+  .icon-wrapper-group  { justify-content: flex-end; gap: 14px; }
 
-  .logo-container {
-    justify-content: center;
-  }
+  .search-input { max-width: 300px; padding: 0.7em 1em; }
 
-  .icon-wrapper-group {
-    justify-content: flex-end;
-  }
-}
+  .nav-img { height: 90px; }
 
-@media (max-width: 480px) {
-  .nav-img {
-    height: 60px;
-  }
+  .icon-cart,
+  .icon-admin { font-size: 1.8rem; }
+
+  .cart-count { top: -2px; right: -6px; }
 }

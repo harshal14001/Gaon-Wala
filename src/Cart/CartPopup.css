@@ -1,43 +1,141 @@
 /* CartPopup.css */
+
+/* ── Overlay + panel ──────────────────────────────────────────────────────
+   Desktop / tablet : panel anchored top-right, width fits the screen.
+   Phones (<= 600px): bottom sheet — full width, slides up from the bottom,
+                      which is easier to reach with a thumb than a small
+                      floating box in the top corner.                      */
 .cart-modal {
+  --cart-top: clamp(64px, 10vh, 80px);
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;
-  padding: 80px 20px 20px 20px;
-  z-index: 1000;
+  padding: var(--cart-top) clamp(12px, 2vw, 20px) 20px;
+  /* Above the header (1000) and the AI widget (2000) so the dimmed overlay
+     covers everything; below the admin login modal (9999). */
+  z-index: 3000;
+  overscroll-behavior: contain;
 }
 
 .cart-modal-content {
+  --close-h: 30px;
   background: white;
-  width: 340px;
-  max-height: 90vh;
+  width: min(380px, 100%);
+  /* vh fallback first, then dvh (accounts for mobile browser toolbars) */
+  max-height: calc(100vh - var(--cart-top) - 20px);
+  max-height: calc(100dvh - var(--cart-top) - 20px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 12px;
-  padding: 20px;
+  padding: clamp(14px, 4vw, 20px);
   position: relative;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  animation: cart-pop 0.2s ease-out;
 }
 
+.cart-modal-content h2 {
+  font-size: clamp(1.2rem, 5vw, 1.5rem);
+  /* keep long headings clear of the close button */
+  padding-right: 44px;
+}
+
+/* Sticky (not absolute) so the close button stays reachable while a long
+   cart / form scrolls. The negative margin cancels its own height so it
+   overlays the heading row instead of pushing content down. */
 .close-btn {
-  position: absolute;
-  top: 10px; right: 15px;
+  position: sticky;
+  top: 8px;
+  align-self: flex-end;
+  z-index: 5;
+  width: 34px;
+  height: var(--close-h);
+  margin-bottom: calc(-1 * var(--close-h));
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: crimson;
   color: white;
   border: none;
-  padding: 4px 10px;
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .empty-cart-msg { text-align: center; color: #888; margin-top: 20px; }
 
+/* ── Checkout progress stepper ──────── */
+.checkout-steps {
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  margin: 12px 0 16px;
+}
+
+.checkout-step {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  font-size: 11px;
+  color: #9a9a9a;
+}
+
+/* connector line running back to the previous step */
+.checkout-step::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: #e0e0e0;
+}
+.checkout-step:first-child::before { display: none; }
+.checkout-step.done::before,
+.checkout-step.active::before { background: #2e7d32; }
+
+.step-inner {
+  position: relative;
+  z-index: 1;                 /* sits above the connector line */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+button.step-inner { cursor: pointer; }
+button.step-inner:hover .step-label { text-decoration: underline; }
+
+.step-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fff;
+  border: 2px solid #d0d0d0;
+  color: #9a9a9a;
+}
+.checkout-step.done .step-dot   { border-color: #2e7d32; background: #e8f5e9; color: #2e7d32; }
+.checkout-step.active .step-dot { border-color: #2e7d32; background: #2e7d32; color: #fff; }
+.checkout-step.done   { color: #2e7d32; }
+.checkout-step.active { color: #2e7d32; font-weight: 700; }
+
 /* ── Cart items ─────────────────────── */
-.cart-items { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.cart-items { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
 
 .cart-item-card {
   display: flex; gap: 10px; align-items: flex-start;
@@ -46,10 +144,27 @@
 
 .cart-item-img { width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; border-radius: 6px; }
 
-.cart-item-details { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-.cart-item-details h4  { margin: 0; font-size: 14px; }
+.cart-item-details { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.cart-item-details h4  { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
 .cart-item-unit-price  { margin: 0; font-size: 12px; color: #888; }
 .cart-line-total       { margin: 4px 0 0; font-size: 13px; font-weight: 700; color: #2e7d32; }
+
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.cart-remove-btn {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-size: 12px;
+  color: #c62828;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.cart-remove-btn:hover { color: #8e0000; }
 
 /* ── Qty stepper ────────────────────── */
 .cart-qty-stepper {
@@ -91,10 +206,13 @@
 .place-order-btn.razorpay-btn:hover:not(:disabled) { background: #1b5e20; }
 
 /* ── Customer form ──────────────────── */
-.details-subtitle { color: #666; font-size: 13px; margin: 4px 0 16px; }
-.customer-form { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+.details-subtitle { color: #666; font-size: 13px; margin: 0 0 14px; }
+.customer-form { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
 .customer-field { display: flex; flex-direction: column; gap: 5px; }
-.customer-field label { font-size: 13px; font-weight: 600; color: #444; }
+.customer-field label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: #444;
+}
 .customer-field input,
 .customer-field textarea {
   padding: 9px 11px; border: 1px solid #ccc;
@@ -104,6 +222,42 @@
 }
 .customer-field input:focus,
 .customer-field textarea:focus { border-color: #2e7d32; }
+
+/* inline validation */
+.customer-field.has-error input,
+.customer-field.has-error textarea { border-color: crimson; }
+.field-error { color: crimson; font-size: 12px; }
+.field-hint  { color: #888;    font-size: 12px; }
+
+.verified-chip {
+  font-size: 11px; font-weight: 700;
+  color: #2e7d32; background: #e8f5e9;
+  border: 1px solid #c8e6c9; border-radius: 10px;
+  padding: 1px 8px;
+}
+
+/* +91 prefix */
+.customer-field .phone-input {
+  display: flex; align-items: stretch;
+  border: 1px solid #ccc; border-radius: 7px;
+  overflow: hidden; transition: border-color 0.2s;
+}
+.customer-field .phone-input:focus-within { border-color: #2e7d32; }
+.customer-field.has-error .phone-input { border-color: crimson; }
+.phone-prefix {
+  display: flex; align-items: center;
+  padding: 0 10px; background: #f3f3f3; color: #555;
+  font-size: 14px; border-right: 1px solid #ddd;
+}
+.customer-field .phone-input input {
+  border: none; border-radius: 0; flex: 1; min-width: 0;
+}
+
+.remember-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: #555; cursor: pointer;
+}
+.remember-row input { width: 16px; height: 16px; accent-color: #2e7d32; }
 
 .details-actions { display: flex; gap: 10px; margin-top: 4px; }
 
@@ -119,44 +273,68 @@
   display: flex; justify-content: space-between;
   background: #f5faf5; border: 1px solid #c8e6c9;
   border-radius: 7px; padding: 8px 12px;
-  font-size: 13px; color: #444;
+  font-size: 13px; color: #444; margin-top: 12px;
 }
+.customer-form .order-summary-mini { margin-top: 0; }
 .order-error { color: crimson; font-size: 13px; text-align: center; margin: 0; }
+
+/* delivery recap (OTP + payment steps) */
+.delivery-recap {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  background: #f7f7f7; border: 1px solid #eee; border-radius: 8px;
+  padding: 10px 12px; font-size: 13px; color: #444;
+}
+.delivery-recap-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.delivery-recap-text span {
+  color: #777;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.link-btn {
+  flex-shrink: 0; background: none; border: none; padding: 2px 0;
+  color: #1976d2; font-size: 13px; cursor: pointer; text-decoration: underline;
+}
 
 /* ── OTP Section ────────────────────── */
 .otp-section {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
-.otp-sent-msg {
-  background: #f0fff4;
-  border: 1px solid #c8e6c9;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #2e7d32;
-  font-weight: 500;
+.otp-status {
+  display: flex; align-items: center; gap: 10px;
+  background: #f0fff4; border: 1px solid #c8e6c9; border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; color: #2e7d32; font-weight: 500;
 }
 
-.otp-input {
+.spinner {
+  width: 16px; height: 16px; flex-shrink: 0;
+  border: 2px solid #c8e6c9; border-top-color: #2e7d32;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Needs .customer-field in the selector — otherwise the generic
+   ".customer-field input" rule above out-ranks it and the big OTP
+   styling never applies. */
+.customer-field .otp-input {
   width: 100%;
   padding: 14px;
-  font-size: 24px;
+  font-size: clamp(20px, 6vw, 24px);
   font-weight: 700;
-  letter-spacing: 10px;
+  letter-spacing: clamp(6px, 2.5vw, 10px);
   text-align: center;
   border: 2px solid #2e7d32;
   border-radius: 10px;
   outline: none;
   color: #1b5e20;
-  /* Hide number input arrows */
-  -moz-appearance: textfield;
 }
-.otp-input::-webkit-outer-spin-button,
-.otp-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.customer-field .otp-input:disabled { opacity: 0.6; }
 
 .otp-resend-btn {
   background: none;
@@ -175,7 +353,7 @@
 }
 
 /* ── Payment Methods ────────────────── */
-.payment-methods { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+.payment-methods { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
 
 .payment-option {
   display: flex; align-items: center; gap: 12px;
@@ -187,7 +365,7 @@
 .payment-option.selected { border-color: #2e7d32; background: #f0fff4; }
 
 .payment-icon { font-size: 32px; flex-shrink: 0; }
-.payment-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.payment-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .payment-info h3 { margin: 0; font-size: 14px; font-weight: 600; color: #333; }
 .payment-info p  { margin: 0; font-size: 12px; color: #888; }
 
@@ -201,22 +379,102 @@
 }
 
 .payment-actions { display: flex; gap: 10px; margin-top: 4px; }
-.payment-actions .back-btn,
+.payment-actions .back-btn { flex: 0 0 auto; }
 .payment-actions .place-order-btn { flex: 1; }
+
+.secure-note { font-size: 12px; color: #888; text-align: center; margin-top: 10px; }
 
 /* ── Success ────────────────────────── */
 .order-success {
   display: flex; flex-direction: column;
-  align-items: center; padding: 30px 10px;
+  align-items: center; padding: 20px 4px 4px;
   text-align: center; gap: 8px;
 }
 .order-success-icon { font-size: 48px; }
 .order-success h3   { margin: 0; font-size: 20px; color: #2e7d32; }
 .order-success p    { color: #555; font-size: 14px; margin: 0; }
+.order-ref          { color: #2e7d32 !important; font-weight: 700; letter-spacing: 0.5px; }
 .success-sub        { color: #888 !important; font-size: 13px !important; }
 
+.success-card {
+  width: 100%; text-align: left;
+  background: #f7faf7; border: 1px solid #c8e6c9; border-radius: 10px;
+  padding: 12px; margin-top: 6px;
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 13px; color: #444;
+}
+.success-line  { display: flex; justify-content: space-between; gap: 10px; }
+.success-line span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.success-total { border-top: 1px dashed #c8e6c9; padding-top: 6px; font-weight: 700; }
+.success-address { color: #666; font-size: 12px; padding-top: 4px; }
+
 .close-after-order-btn {
-  margin-top: 12px; padding: 8px 24px;
+  margin-top: 12px; padding: 10px 24px;
   background: #2e7d32; color: white;
-  border: none; border-radius: 6px; cursor: pointer;
+  border: none; border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: 600;
+}
+
+/* ── Animations ─────────────────────── */
+@keyframes cart-pop {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes cart-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0);    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RESPONSIVE — kept last so these override the base rules above
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Phones: bottom sheet */
+@media (max-width: 600px) {
+  .cart-modal {
+    --cart-top: 0px;
+    padding: 0;
+    justify-content: center;
+    align-items: flex-end;
+  }
+
+  .cart-modal-content {
+    --close-h: 36px;
+    width: 100%;
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: calc(clamp(14px, 4vw, 20px) + env(safe-area-inset-bottom, 0px));
+    animation: cart-sheet-up 0.28s ease-out;
+  }
+
+  .close-btn { width: 40px; }
+
+  /* 16px inputs stop iOS Safari from zooming the page when a field is focused */
+  .customer-field input,
+  .customer-field textarea { font-size: 16px; }
+
+  /* Bigger tap targets */
+  .cart-qty-btn     { padding: 6px 13px; }
+  .cart-qty-display { padding: 6px 12px; }
+  .cart-remove-btn  { padding: 8px 4px; }
+  .back-btn         { padding: 12px 14px; }
+  .link-btn         { padding: 6px 2px; }
+
+  .payment-option { padding: 12px; gap: 10px; }
+  .payment-icon   { font-size: 26px; }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .details-actions,
+  .payment-actions { flex-direction: column-reverse; }
+  .payment-actions .back-btn { flex: 1 1 auto; }
+
+  .checkout-step { font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-modal-content { animation: none; }
+  .spinner { animation-duration: 1.5s; }
 }
