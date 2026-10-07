@@ -50,7 +50,9 @@
 }
 
 .nav-img {
-  height: clamp(36px, 11vw, 52px);
+  /* ~56px on the smallest phones up to 76px by 480px wide — large enough
+     for the lettering in the badge to stay readable. Desktop is 90px. */
+  height: clamp(56px, 16vw, 76px);
   width: auto;
   max-width: 100%;
   object-fit: contain;
@@ -107,7 +109,7 @@
 }
 
 /* ── Desktop / large tablet ─────────────────────────────────────────────── */
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   .store-header {
     padding: 1rem 2vw;
     flex-wrap: nowrap;
