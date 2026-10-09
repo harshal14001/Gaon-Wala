@@ -1,3 +1,5 @@
+# Note: Dependencies are dynamic, and might have changed for production perspective.  
+
 # 🔐 Environment Setup Guide
 
 ## **CRITICAL: Never commit `.env` files to GitHub**
